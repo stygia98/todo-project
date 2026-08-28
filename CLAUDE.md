@@ -375,7 +375,9 @@ Spring의 `Page` 객체를 그대로 반환하지 않고 `PageResponse<T>` DTO�
 
 > ⚠️ **Spring Boot 4는 Jackson 3를 쓴다. 별도 설정을 넣지 않는다.**
 > Jackson 3의 기본값이 이미 ISO-8601 문자열이므로 위 요구는 **무설정으로 충족된다.**
-> Boot 3 시절 튜토리얼을 보고 `SerializationFeature.WRITE_DATES_AS_TIMESTAMPS`를 코드에서 참조하면 **컴파일에 실패한다.** 이 상수는 Jackson 3에서 `DateTimeFeature`로 이동했고, 프로퍼티 경로도 `spring.jackson.serialization.*` → `spring.jackson.datatype.datetime.*`으로 바뀌었다. 굳이 명시하지 말고 기본값에 맡긴다.
+> Boot 3 시절 튜토리얼을 보고 `SerializationFeature.WRITE_DATES_AS_TIMESTAMPS`를 참조하지 않는다. 이 상수는 Jackson 3에서 `DateTimeFeature`로 이동했고, 프로퍼티 경로도 `spring.jackson.serialization.*` → `spring.jackson.datatype.datetime.*`으로 바뀌었다. 굳이 명시하지 말고 기본값에 맡긴다.
+>
+> ⚠️ **컴파일 오류로 걸러지지 않는다. 조용히 무시된다.** (2026-08-28 `dependency:tree`로 확인) `springdoc`과 `jjwt-jackson`이 **Jackson 2(`com.fasterxml.jackson`)를 compile scope로 함께 끌고 들어오므로**, 옛 상수를 참조해도 **컴파일은 통과한다.** 그러나 Boot 4의 실제 직렬화 엔진은 Jackson 3(`tools.jackson`)이라 그 설정이 **아무 효과도 내지 못한다.** "설정했는데 왜 안 되지"를 겪게 되는, 컴파일 실패보다 나쁜 실패 양상이다. 애초에 손대지 않는 것이 유일한 방어다.
 
 #### 인증 예외 케이스
 

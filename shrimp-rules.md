@@ -52,19 +52,22 @@
 
 | 저장소 | 브랜치 | 커밋 | 원격 | 비고 |
 |---|---|---|---|---|
-| `todo-project` | `main` (unborn) | 0 | `origin` (푸시 전) | 전 파일 untracked. `develop`은 첫 커밋 후 생성 |
-| `todo-backend` | `main` (unborn) | 0 | `origin` (푸시 전) | 전 파일 untracked. `develop`은 첫 커밋 후 생성 |
-| `todo-frontend` | `main` (unborn) | 0 | `origin` (푸시 전) | 전 파일 untracked. `develop`은 첫 커밋 후 생성 |
+| `todo-project` | `main` (+ `develop`) | 1 (`09235df`) | `origin` 푸시 완료 | 21파일. 태그 `v0.0.0` |
+| `todo-backend` | `main` (+ `develop`) | 1 (`802b713`) + Phase 1 미커밋분 | `origin` 푸시 완료 | 태그 `v0.0.0`. Phase 1 산출물(yml 3개·config 2개·`.env.example`·`CLAUDE.md`)이 **아직 미커밋** |
+| `todo-frontend` | `main` (+ `develop`) | 1 (`c62d5b6`) | `origin` 푸시 완료 | 22파일. 태그 `v0.0.0` |
 
-**세 저장소가 완전히 같은 출발선이다.** `todo-frontend`에 있던 커밋 1건(`Initial commit from Create Next App`)과 `develop` 브랜치는 **2026-08-28에 제거했다**(3.2 참조). 작업 트리 파일은 그대로다.
+**세 저장소가 같은 형태다.** 모두 `main` 체크아웃 + `develop` 분기 + `origin` 푸시 완료이며, `master`는 없다.
+원격은 `git@github.com:stygia98/{todo-project,todo-backend,todo-frontend}.git`이다(언더스코어 이름은 301 리다이렉트로만 남아 있다).
 
-⚠️ **커밋이 0건인 저장소에는 `develop`을 만들 수 없다.** 브랜치는 커밋을 가리키는 포인터이므로 가리킬 대상이 없다. **세 저장소 모두** 첫 커밋 직후 `git branch develop main`을 실행한다.
+⚠️ **앞으로의 작업은 `feature/{작업명}` → `develop` → `main` 순서다.** `main`에 직접 커밋하지 않는다.
 
 **구현된 소스 (이것이 전부다)**
 
 ```
 todo-backend/src/main/java/com/example/TodoBackendApplication.java   # @SpringBootApplication 뿐
-todo-backend/src/main/resources/application.properties               # yml로 교체 대상
+todo-backend/src/main/java/com/example/config/SecurityConfig.java    # 최소 인가 골격 (Phase 3에서 확장)
+todo-backend/src/main/java/com/example/config/OpenApiConfig.java     # bearerAuth 스킴
+todo-backend/src/main/resources/{application,application-local,application-prod}.yml
 todo-backend/src/test/java/com/example/TodoBackendApplicationTests.java
 
 todo-frontend/src/app/{layout.tsx,page.tsx,globals.css}              # create-next-app 기본값
@@ -72,27 +75,21 @@ todo-frontend/src/components/ui/button.tsx                           # shadcn �
 todo-frontend/src/lib/utils.ts                                       # cn()
 ```
 
-`domain/`, `service/`, `controller/`, `dto/`, `config/`, `exception/` 패키지는 **아직 없다.**
+`config/`를 제외한 `domain/`, `service/`, `controller/`, `dto/`, `exception/` 패키지는 **디렉토리만 있고 클래스가 없다.**
 `src/hooks/`, `src/types/`, `src/components/{common,todo}/`도 **아직 없다.**
 
-**진행 Phase**: 0(저장소 초기화) · 1(백엔드 스캐폴딩) · 6(프론트 스캐폴딩) 모두 🟡 진행중.
+**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 6(프론트 스캐폴딩) 🟡. 다음은 Phase 2(도메인 & DB).
 
 ### 3.1 미해결 부채 — 착수 전 반드시 확인
 
 | # | 항목 | 현재 상태 | 조치 위치 |
 |---|---|---|---|
-| 1 | 세 저장소 첫 커밋·푸시 | 커밋 **0/0/0건**. 원격 `origin`은 3개 모두 **연결됨**(`git@github.com:stygia98/{todo_project,todo-backend,todo-frontend}.git`)이나 **푸시 전**이다. 첫 커밋 → 푸시 → `develop` 분기가 남았다 | Phase 0 |
-| 2 | **DB 비밀번호 평문** | `application.properties`에 `spring.datasource.password`가 하드코딩되어 있고, 이 파일은 아직 **커밋 전**이다 | Phase 1 · yml + 환경변수로 이전한 뒤 커밋 |
-| 3 | **DB 대상 불일치** | 현재: DB `postgres` + `currentSchema=todolist_db`. `CLAUDE.md` 12·13장: **DB 자체가 `todolist_db`**(`createdb todolist_db`) | Phase 1 · **영속 규칙은 6.4절**(이 행을 지워도 규칙은 남는다) |
-| 4 | 백엔드 설정 분리 | `application.properties` 하나뿐. `application.yml` + `-local` + `-prod` 미생성 | Phase 1 |
-| 5 | 백엔드 `CLAUDE.md` | **없다.** 프론트에는 있다 | Phase 1 |
-| 6 | 백엔드 `.env.example` | 파일이 아직 없다 (무시 규칙은 준비됨) | Phase 1 |
-| 7 | 프론트 다크 모드 | `globals.css`가 `@custom-variant dark (&:is(.dark *))` + `.dark {}` = **`class` 전략.** 스펙은 `@media (prefers-color-scheme: dark)` | Phase 6 |
-| 8 | 프론트 디자인 토큰 | shadcn 기본 neutral(oklch). `CLAUDE.md` 8장 팔레트 미적용 | Phase 6 |
-| 9 | `components.json` | `"style": "radix-nova"`. 스펙은 `new-york` | Phase 6 |
-| 10 | 프론트 미설치 | `motion`, `@tiptap/react`, `@tiptap/starter-kit`, `@tanstack/react-query`, `dompurify`, `date-fns`, `sonner` | Phase 6 |
-| 11 | 프론트 `.env.example` | 파일이 아직 없다 (무시 규칙은 준비됨) | Phase 6 |
-| 12 | Pretendard 폰트 | `src/app/fonts/` 없음 | Phase 6 |
+| 1 | 프론트 다크 모드 | `globals.css`가 `@custom-variant dark (&:is(.dark *))` + `.dark {}` = **`class` 전략.** 스펙은 `@media (prefers-color-scheme: dark)` | Phase 6 |
+| 2 | 프론트 디자인 토큰 | shadcn 기본 neutral(oklch). `CLAUDE.md` 8장 팔레트 미적용 | Phase 6 |
+| 3 | `components.json` | `"style": "radix-nova"`. 스펙은 `new-york` | Phase 6 |
+| 4 | 프론트 미설치 | `motion`, `@tiptap/react`, `@tiptap/starter-kit`, `@tanstack/react-query`, `dompurify`, `date-fns`, `sonner` | Phase 6 |
+| 5 | 프론트 `.env.example` | 파일이 아직 없다 (무시 규칙은 준비됨) | Phase 6 |
+| 6 | Pretendard 폰트 | `src/app/fonts/` 없음 | Phase 6 |
 
 ### 3.2 해소된 부채 (2026-08-28)
 
@@ -105,7 +102,10 @@ todo-frontend/src/lib/utils.ts                                       # cn()
 | shrimp `DATA_DIR` 오지정 | `.mcp.json`을 `D:\claude\todo-project\shrimp_data`로 변경 |
 | 브랜치명 `master` | 세 저장소 모두 `main` |
 | `todo-frontend`만 커밋 1건 | 세 저장소의 출발선을 맞추기 위해 **커밋과 `develop`을 제거**해 unborn `main`·0커밋으로 초기화했다. 커밋에만 있던 `AGENTS.md`(Next 16 자동 생성물, 의도적 삭제)와 `app/globals.css`(→ `src/app/globals.css`로 이동) 외에 **소실된 파일은 없다** |
-| 원격 미연결 | 세 저장소 모두 `origin` 연결 완료 (푸시는 첫 커밋 이후) |
+| 원격 미연결 | 세 저장소 모두 `origin` 연결 완료 |
+| Phase 1 전체 | ✅ **완료(2026-08-28).** DoD 9항목 전수 통과. `.properties` → yml 3분할, 평문 비밀번호를 `${DB_PASSWORD}`로 이전(히스토리 미유입 확인), DB 대상을 `todolist_db` 직결로 정정, 패키지 6개 + `SecurityConfig`·`OpenApiConfig`, `.env.example`·저장소 `CLAUDE.md` 작성. 기동 로그에 `local` 프로파일 확인, Swagger UI 200 + Authorize 버튼 렌더 확인 |
+| Phase 0 전체 | ✅ **완료.** 첫 커밋 → `develop` 분기 → `main`·`develop` 푸시 → 태그 `v0.0.0`. ROADMAP Phase 0 **DoD 9항목 전부 통과** |
+| 저장소 이름 | GitHub 3개 모두 `todo-` 하이픈으로 통일(`todo-project`/`todo-backend`/`todo-frontend`). 로컬 remote URL도 일치. 언더스코어 이름은 301 리다이렉트로만 남음 |
 | `.env` 무시 규칙 | **세 저장소 모두** `.env*` + `!.env.example` 적용. `.env`는 무시되고 `.env.example`은 추적 가능함을 실파일로 검증 |
 
 ---
@@ -262,6 +262,7 @@ docs/PRD.md 3장 (ID 부여)
 - **DB는 `todolist_db`(테스트 `todolist_test`) 데이터베이스 *자체*를 쓴다.** `postgres` DB에 `?currentSchema=todolist_db`로 붙지 않는다 (`CLAUDE.md` 12·13장은 `createdb todolist_db` 전제).
   `spring.datasource.url`은 `jdbc:postgresql://localhost:5432/todolist_db` 형태다.
 - **`application.yml`(공통)에 `spring.jpa.properties.hibernate.jdbc.time_zone: UTC`를 둔다.** 10절 20번 참조.
+- ⚠️ **설정을 바꿨는데 동작이 그대로면 `./mvnw clean`을 먼저 실행한다.** Maven은 리소스를 `target/classes`로 복사할 뿐 **낡은 파일을 지우지 않는다.** Phase 1에서 `application.properties`를 소스에서 삭제했을 때 `target/classes`에 평문 비밀번호를 담은 복사본이 남아 있었다. 그대로 두면 런타임에 그 `.properties`가 로드되어 `.yml`을 덮어쓴다 — **소스에는 없는데 동작은 옛 설정인** 상태가 된다.
 
 ### 6.5 실행 명령 (Windows)
 
@@ -384,7 +385,7 @@ App Router에는 `router.events`도, 공식 내비게이션 차단 API도 **없�
 - **커밋 전 반드시 사용자 승인을 받는다.**
 - 커밋 메시지는 **한글**, prefix는 `feat: / fix: / refactor: / test: / docs: / chore:`
 - 브랜치: `main`(배포 가능) ← `develop` ← `feature/{작업명}`
-  - 세 저장소 모두 unborn `main`(0커밋)이다. **세 저장소 모두 첫 커밋 직후 `git branch develop main`**을 실행해야 한다(3절 참조).
+  - 세 저장소 모두 `main` + `develop`이 서 있고 원격 추적까지 설정됐다. **이제부터 `main`·`develop`에 직접 커밋하지 않고 `feature/{작업명}`을 판다.**
 - 저장소별로 **개별 커밋**한다.
 - 첫 커밋 전 `git add -An .`로 대상 파일 수를 확인한다. **문서 저장소의 예상값은 21건**이다. 수백~수천 건이면 무시 규칙이 빠진 것이다.
 

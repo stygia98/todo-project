@@ -11,8 +11,8 @@
 
 | Phase | 내용 | 저장소 | 상태 |
 |---|---|---|---|
-| 0 | 저장소 초기화 | 전체 | 🟡 |
-| 1 | 백엔드 스캐폴딩 | backend | 🟡 |
+| 0 | 저장소 초기화 | 전체 | ✅ |
+| 1 | 백엔드 스캐폴딩 | backend | ✅ |
 | 2 | 도메인 & DB | backend | ⬜ |
 | 3 | 인증 (로컬) + 인증 테스트 | backend | ⬜ |
 | 4 | Todo API + Todo 테스트 | backend | ⬜ |
@@ -48,8 +48,8 @@
 >
 > | 항목 | 현재 상태 | 처리 Phase |
 > |---|---|---|
-> | 커밋·푸시 | 세 저장소 모두 **커밋 0건**(2026-08-28에 `todo-frontend`의 커밋 1건을 제거해 출발선을 맞췄다). 원격 `origin`은 **3개 모두 연결됨**, 다만 **푸시 전**이다 | Phase 0 |
-> | 브랜치명 | ✅ **해소(2026-08-28).** 세 저장소 모두 unborn `main`이다. **잔여**: 커밋이 0건이라 `develop`을 만들 수 없다(브랜치는 커밋을 가리키는 포인터다). **세 저장소 모두 첫 커밋 직후 `git branch develop main`**을 실행한다 | Phase 0 (잔여만) |
+> | ~~커밋·푸시~~ | ✅ **해소.** 세 저장소 모두 첫 커밋 후 `main`·`develop`을 `origin`에 푸시했다. 태그 `v0.0.0` 부착 완료 | — |
+> | ~~브랜치명~~ | ✅ **해소.** 세 저장소 모두 `main` + `develop`. `master` 없음 | — |
 > | ~~루트 `.gitignore`~~ | ✅ **해소.** `node_modules/`·`.metadata/`·`shrimp_data/`·`.env*`+`!.env.example`을 추가했다. 스테이징 대상이 563개 → **21개**로 줄었다 | — |
 > | ~~백엔드 `.gitignore`~~ | ✅ **해소.** `.env*` + `!.env.example` 추가. 실파일로 무시/추적을 검증했다 | — |
 > | ~~프론트 `.gitignore`~~ | ✅ **해소.** `!.env.example` 예외 줄 추가. 실파일로 검증했다 | — |
@@ -57,8 +57,8 @@
 > | ~~루트 npm 파일~~ | ✅ **해소.** 루트 `package.json`·`package-lock.json`·`node_modules/`를 삭제했다. `shadcn`은 `todo-frontend/package.json`에 이미 있어 기능 손실이 없고, `.mcp.json`의 shadcn 서버는 `npx shadcn@latest mcp`라 루트 설치에 의존하지 않는다 | — |
 > | ~~`docs/guides/`~~ | ✅ **해소.** 5개 전부 다른 프로젝트에서 넘어온 문서였고(존재하지 않는 "PRD 1.3 기술 스택" 참조, 모노레포·Next 16·없는 npm 스크립트 전제), **이 프로젝트 기준으로 전부 재작성**했다. `nextjs-16.md`→`nextjs-15.md`, `forms-react-hook-form.md`→`forms.md`로 개명. `README.md`를 추가해 "참고 자료이며 `CLAUDE.md`가 우선"임을 명시 | — |
 > | ~~폼 라이브러리 미결정~~ | ✅ **해소.** `CLAUDE.md` 3장에 **"라이브러리를 쓰지 않는다 — `useState` + 수동 검증"**으로 확정. `npx shadcn add form` 금지(=`react-hook-form` 유입 경로)와 Tiptap dirty 판정 주의를 함께 명시 | — |
-> | 백엔드 설정 파일 | `src/main/resources/application.properties` 하나뿐. `application.yml` + `-local` + `-prod` 분리 미완 | Phase 1 |
-> | 백엔드 문서·예시 | `.env.example`, 저장소용 `CLAUDE.md` 없음 | Phase 1 |
+> | ~~백엔드 설정 파일~~ | ✅ **해소.** `application.properties`를 삭제하고 `application.yml` + `-local` + `-prod` 3분할로 교체했다. 평문 DB 비밀번호는 `${DB_PASSWORD}` 환경변수로 이전했고 히스토리 미유입을 확인했다 | — |
+> | ~~백엔드 문서·예시~~ | ✅ **해소.** `.env.example`(9개 키)과 저장소용 `CLAUDE.md`를 작성했다 | — |
 > | 프론트 마감 작업 | 디자인 토큰이 shadcn 기본 neutral, 다크 모드가 `@custom-variant dark (&:is(.dark *))`(= `class` 전략), `components.json` 스타일이 `radix-nova`, `.env.example` 없음, Tiptap·motion·sonner·date-fns·DOMPurify 미설치 | Phase 6 |
 
 > **테스트는 마지막에 몰아 쓰지 않는다.** 기능을 만든 Phase에서 함께 작성해 그 Phase의 DoD로 삼는다. Phase 10은 새 테스트를 쓰는 단계가 아니라 전체를 확인하는 단계다.
@@ -123,7 +123,7 @@
 - `todo-backend/`, `todo-frontend/` 폴더 생성 후 각각 `git init`
 - ~~각 저장소 `.gitignore`에 `.env*` + **`!.env.example`**~~ — ✅ **완료(세 저장소 모두).** 예외 줄이 없으면 예시 파일까지 무시된다
   > 아래 DoD의 `git check-ignore` 검증은 **여전히 수행한다.** 규칙이 있다는 것과 의도대로 판정된다는 것은 별개다.
-- **브랜치 정리** — ✅ 세 저장소 모두 unborn `main`으로 정리 완료. **남은 것은 `develop` 생성뿐이며, 커밋이 0건이라 지금은 만들 수 없다.** 첫 커밋 직후 세 저장소 각각에서 `git branch develop main`을 실행한다. 이후 작업은 `feature/{작업명}` → `develop` → `main` (`CLAUDE.md` 2장)
+- ~~브랜치 정리~~ — ✅ **완료.** 세 저장소 모두 `main`(체크아웃) + `develop`. 이후 작업은 `feature/{작업명}` → `develop` → `main` (`CLAUDE.md` 2장)
   > `todo-frontend`에 있던 커밋 1건(`Initial commit from Create Next App`)과 `develop`은 **2026-08-28에 제거**해 세 저장소의 출발선을 맞췄다. 작업 트리 파일은 그대로이며 전부 untracked 상태다.
 - ~~문서 경로 확정~~ — ✅ **완료(v1.8).** `docs/`를 정본으로 확정했다. `CLAUDE.md`만 루트에 두는데, Claude Code가 상위 디렉토리를 거슬러 올라가며 자동 로드하는 대상이 `CLAUDE.md`이기 때문이다. 2장 구조도와 상단 참조 경로를 정정했다
 - ~~`nextjs-16.md` 처리~~ — ✅ **완료.** 삭제하고 **`docs/guides/nextjs-15.md`로 재작성**했다. 단순 버전 치환이 아니라 이 프로젝트 기준으로 다시 썼다: "Server Components 우선"을 **"클라이언트 컴포넌트 우선"**으로 뒤집고(토큰이 localStorage에 있어 서버 페칭이 불가능), Next 16 전용 내용(`proxy.ts`, `cacheComponents`, 최상위 `typedRoutes`)을 걷어내고, 쓰지 않는 기능(Server Actions·Route Handlers·Parallel/Intercepting Routes·ISR·`notFound()`)을 **금지 표로 명시**했다
@@ -132,16 +132,16 @@
 - ~~GitHub에 원격 저장소 3개 생성 및 연결~~ — ✅ **완료.** `origin`이 세 저장소 모두에 등록됐다(`todo_project` / `todo-backend` / `todo-frontend`). **푸시는 첫 커밋 이후**다
 
 **DoD**
-- [ ] 부모 저장소에서 `git status` 시 하위 폴더가 나타나지 않음
-- [ ] **부모 저장소에서 `git status` 시 `node_modules/`가 나타나지 않음**
-- [ ] **세 저장소 각각에서 `git check-ignore .env`가 exit 0(무시됨)이고, `git check-ignore .env.example`이 exit 1(추적 가능)임** (문서·백엔드·프론트 세 곳 모두에서 확인)
+- [x] 부모 저장소에서 `git status` 시 하위 폴더가 나타나지 않음
+- [x] **부모 저장소에서 `git status` 시 `node_modules/`가 나타나지 않음**
+- [x] **세 저장소 각각에서 `git check-ignore .env`가 exit 0(무시됨)이고, `git check-ignore .env.example`이 exit 1(추적 가능)임** (문서·백엔드·프론트 세 곳 모두에서 확인)
   > ⚠️ **`-v`를 붙이면 판정이 뒤집힌다.** `-v`는 **부정 규칙(`!.env.example`)이 매칭돼도 그 줄을 출력하고 exit 0을 반환**한다. 즉 이 DoD가 요구하는 `!.env.example` 규칙을 올바로 넣을수록 "아무것도 반환하지 않는다"를 만족할 수 없다. **무시 여부 판정에는 `-v`를 쓰지 않는다.** 확실히 하려면 실파일을 만들어 `git status --porcelain -uall -- .env .env.example`에 `.env.example`만 뜨는지 본다.
-- [ ] 세 저장소 모두 현재 브랜치가 `main`이고 `develop`이 존재함 (`master` 없음)
-- [ ] 세 저장소 모두 첫 커밋 및 원격 푸시 완료
-- [ ] 첫 커밋의 파일 수가 예상 범위 안임 (`git show --stat HEAD | tail -1`로 확인 — 문서 저장소가 수천 건이면 무시 규칙이 빠진 것)
-- [ ] `CLAUDE.md` 2장 구조도의 문서 경로가 실제 파일 위치(`docs/`)와 일치함
-- [ ] `docs/guides/`가 `README.md` + 재작성된 5개 문서로만 구성됨 (`nextjs-16.md`·`forms-react-hook-form.md` 없음)
-- [ ] **`todo-frontend/package.json`에 `react-hook-form`·`zod`·`@hookform/resolvers`·`next-themes`가 없음** (스펙 밖 라이브러리 유입 확인)
+- [x] 세 저장소 모두 현재 브랜치가 `main`이고 `develop`이 존재함 (`master` 없음)
+- [x] 세 저장소 모두 첫 커밋 및 원격 푸시 완료
+- [x] 첫 커밋의 파일 수가 예상 범위 안임 (`git show --stat HEAD | tail -1`로 확인 — 문서 저장소가 수천 건이면 무시 규칙이 빠진 것)
+- [x] `CLAUDE.md` 2장 구조도의 문서 경로가 실제 파일 위치(`docs/`)와 일치함
+- [x] `docs/guides/`가 `README.md` + 재작성된 5개 문서로만 구성됨 (`nextjs-16.md`·`forms-react-hook-form.md` 없음)
+- [x] **`todo-frontend/package.json`에 `react-hook-form`·`zod`·`@hookform/resolvers`·`next-themes`가 없음** (스펙 밖 라이브러리 유입 확인)
 
 ---
 
@@ -161,15 +161,15 @@
 - `.gitattributes`는 이미 있다(`/mvnw text eol=lf`). **삭제하거나 덮어쓰지 않는다** (`CLAUDE.md` 13장)
 
 **DoD**
-- [ ] `pom.xml`의 SpringDoc이 **현재 Boot 버전에 대응하는 정확한 3.x 버전으로 핀**되어 있음 (범위 지정 금지 — `CLAUDE.md` 3장)
-- [ ] `pom.xml`에 **`jsoup`이 포함**되어 있음 (Phase 4의 XSS 정화 전제)
-- [ ] `pom.xml`에 **jjwt 3종(`jjwt-api`/`jjwt-impl`/`jjwt-jackson`)이 동일 버전으로 핀**되어 있음 (Phase 3의 `JwtTokenProvider` 전제)
-- [ ] `./mvnw dependency:tree` 오류 없음
-- [ ] **`src/main/resources`에 `application.properties`가 없고 `application.yml`·`application-local.yml`·`application-prod.yml`이 있음**
-- [ ] `./mvnw spring-boot:run`이 옵션 없이 local 프로파일로 기동 성공
-- [ ] **기동 로그에 `The following 1 profile is active: "local"`이 찍힘**
-- [ ] `http://localhost:8080/swagger-ui/index.html`이 200으로 열리고 API 목록 화면이 렌더됨
-- [ ] `git check-ignore .env`가 exit 0이고 `git check-ignore .env.example`이 exit 1임 (**`-v`를 붙이지 않는다** — 이유는 Phase 0 DoD의 주석 참조)
+- [x] `pom.xml`의 SpringDoc이 **현재 Boot 버전에 대응하는 정확한 3.x 버전으로 핀**되어 있음 (범위 지정 금지 — `CLAUDE.md` 3장)
+- [x] `pom.xml`에 **`jsoup`이 포함**되어 있음 (Phase 4의 XSS 정화 전제)
+- [x] `pom.xml`에 **jjwt 3종(`jjwt-api`/`jjwt-impl`/`jjwt-jackson`)이 동일 버전으로 핀**되어 있음 (Phase 3의 `JwtTokenProvider` 전제)
+- [x] `./mvnw dependency:tree` 오류 없음
+- [x] **`src/main/resources`에 `application.properties`가 없고 `application.yml`·`application-local.yml`·`application-prod.yml`이 있음**
+- [x] `./mvnw spring-boot:run`이 옵션 없이 local 프로파일로 기동 성공
+- [x] **기동 로그에 `The following 1 profile is active: "local"`이 찍힘**
+- [x] `http://localhost:8080/swagger-ui/index.html`이 200으로 열리고 API 목록 화면이 렌더됨
+- [x] `git check-ignore .env`가 exit 0이고 `git check-ignore .env.example`이 exit 1임 (**`-v`를 붙이지 않는다** — 이유는 Phase 0 DoD의 주석 참조)
 
 > SpringDoc 버전은 `CLAUDE.md` 3장에서 3.x로 확정됐다. 다시 조사하거나 2.x로 되돌리지 않는다.
 
