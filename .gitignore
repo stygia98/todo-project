@@ -1,0 +1,18 @@
+todo-backend/
+todo-frontend/
+
+.DS_Store
+*.log
+
+# Eclipse(STS) 워크스페이스. 작업 대상이 아니며 파일이 수백 개다
+.metadata/
+
+# 루트에서 npx 등을 실수로 실행했을 때의 재발 방지용
+node_modules/
+
+# shrimp-task-manager 로컬 태스크 상태. 절대 경로가 섞이므로 공유하지 않는다
+shrimp_data/
+
+# 환경 변수 — .env*만 쓰면 .env.example까지 무시되므로 예외 줄이 반드시 필요하다
+.env*
+!.env.example

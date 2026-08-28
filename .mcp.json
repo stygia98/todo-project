@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "env": {}
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "env": {}
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
+    },
+    "shrimp-task-manager": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["D:\\claude\\mcp-shrimp-task-manager\\dist\\index.js"],
+      "env": {
+        "DATA_DIR": "D:\\claude\\todo-project\\shrimp_data",
+        "TEMPLATES_USE": "ko",
+        "ENABLE_GUI": "true"
+      }
+    }
+  }
+}
