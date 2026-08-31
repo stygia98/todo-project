@@ -1,7 +1,7 @@
 # 개발 규칙 (shrimp-rules.md)
 
 > **대상**: 이 저장소에서 작업하는 Coding Agent 전용. 사람을 위한 튜토리얼이 아니다.
-> **최종 검증**: 2026-08-28 · 실제 파일 스캔 기준
+> **최종 검증**: 2026-08-31 · 실제 파일 스캔 기준
 > **이 문서의 지위**: **작업 절차 규칙**이다. **기술 스펙의 정본이 아니다.**
 > 스펙이 필요하면 `CLAUDE.md`를 읽는다. 이 문서는 "무엇을, 어느 파일을, 어떤 순서로 함께 고치는가"만 정의한다.
 
@@ -46,17 +46,19 @@
 
 ---
 
-## 3. 현재 상태 스냅샷 (2026-08-28 검증)
+## 3. 현재 상태 스냅샷 (2026-08-31 검증)
 
 작업 착수 전 이 표와 실제 상태가 같은지 확인한다. 다르면 이 절을 먼저 갱신한다.
 
 | 저장소 | 브랜치 | 커밋 | 원격 | 비고 |
 |---|---|---|---|---|
-| `todo-project` | `main` (+ `develop`) | 1 (`09235df`) | `origin` 푸시 완료 | 21파일. 태그 `v0.0.0` |
-| `todo-backend` | `main` (+ `develop`) | 1 (`802b713`) + Phase 1 미커밋분 | `origin` 푸시 완료 | 태그 `v0.0.0`. Phase 1 산출물(yml 3개·config 2개·`.env.example`·`CLAUDE.md`)이 **아직 미커밋** |
-| `todo-frontend` | `main` (+ `develop`) | 1 (`c62d5b6`) | `origin` 푸시 완료 | 22파일. 태그 `v0.0.0` |
+| `todo-project` | `main` (+ `develop`, 동일 해시) | 2 (`72d1fd1`) | `origin` 푸시 완료 | 21파일. 태그 `v0.0.0` |
+| `todo-backend` | `main` (`6f9f609`) · `develop` (`0057e44`) · **`feature/phase2-domain-db` (`0851e0a`) 체크아웃 중** | main 4 | `main`·`develop` 푸시 완료. **feature 브랜치는 미푸시** | 25파일. 태그 `v0.0.0`, `v0.1.0` |
+| `todo-frontend` | `main` (+ `develop`, 동일 해시) | 1 (`c62d5b6`) | `origin` 푸시 완료 | 22파일. 태그 `v0.0.0` |
 
-**세 저장소가 같은 형태다.** 모두 `main` 체크아웃 + `develop` 분기 + `origin` 푸시 완료이며, `master`는 없다.
+**세 저장소 모두 `develop` 분기 + `origin` 푸시 완료이며, `master`는 없다.**
+다만 `todo-backend`만 형태가 다르다. Phase 2 작업분이 `feature/phase2-domain-db`에 커밋되어 있고 **아직 `develop`에 병합되지 않았다.**
+`main`이 `develop`보다 병합 커밋 하나만큼 앞선 구조는 Phase 1에서 확립된 패턴이며 오류가 아니다.
 원격은 `git@github.com:stygia98/{todo-project,todo-backend,todo-frontend}.git`이다(언더스코어 이름은 301 리다이렉트로만 남아 있다).
 
 ⚠️ **앞으로의 작업은 `feature/{작업명}` → `develop` → `main` 순서다.** `main`에 직접 커밋하지 않는다.
@@ -64,21 +66,32 @@
 **구현된 소스 (이것이 전부다)**
 
 ```
-todo-backend/src/main/java/com/example/TodoBackendApplication.java   # @SpringBootApplication 뿐
+todo-backend/src/main/java/com/example/TodoBackendApplication.java   # @SpringBootApplication + @EnableJpaAuditing
 todo-backend/src/main/java/com/example/config/SecurityConfig.java    # 최소 인가 골격 (Phase 3에서 확장)
 todo-backend/src/main/java/com/example/config/OpenApiConfig.java     # bearerAuth 스킴
+todo-backend/src/main/java/com/example/domain/BaseEntity.java        # @MappedSuperclass, 감사 필드(Instant)
+todo-backend/src/main/java/com/example/domain/User.java              # users
+todo-backend/src/main/java/com/example/domain/Todo.java              # todos, @Index(idx_todos_user_deleted), user는 LAZY
+todo-backend/src/main/java/com/example/domain/AuthProvider.java      # LOCAL / GOOGLE
+todo-backend/src/main/java/com/example/domain/Priority.java          # HIGH / MEDIUM / LOW
+todo-backend/src/main/java/com/example/domain/UserRepository.java    # deleted_at IS NULL 조건 포함
+todo-backend/src/main/java/com/example/domain/TodoRepository.java    # deleted_at IS NULL 조건 포함
 todo-backend/src/main/resources/{application,application-local,application-prod}.yml
-todo-backend/src/test/java/com/example/TodoBackendApplicationTests.java
+todo-backend/src/test/java/com/example/TodoBackendApplicationTests.java    # contextLoads
+todo-backend/src/test/java/com/example/domain/UserRepositoryTest.java      # @DataJpaTest 5건
+todo-backend/src/test/java/com/example/domain/TodoRepositoryTest.java      # @DataJpaTest 8건
+todo-backend/src/test/resources/application-test.yml                       # todolist_test, create-drop
 
 todo-frontend/src/app/{layout.tsx,page.tsx,globals.css}              # create-next-app 기본값
 todo-frontend/src/components/ui/button.tsx                           # shadcn 버튼 1개
 todo-frontend/src/lib/utils.ts                                       # cn()
 ```
 
-`config/`를 제외한 `domain/`, `service/`, `controller/`, `dto/`, `exception/` 패키지는 **디렉토리만 있고 클래스가 없다.**
+백엔드 테스트는 **총 14건**이다(`TodoRepositoryTest` 8 + `UserRepositoryTest` 5 + `contextLoads` 1).
+`service/`, `controller/`, `dto/`, `exception/` 패키지는 **디렉토리만 있고 클래스가 없다.** `domain/`과 `config/`에는 위 클래스들이 있다.
 `src/hooks/`, `src/types/`, `src/components/{common,todo}/`도 **아직 없다.**
 
-**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 6(프론트 스캐폴딩) 🟡. 다음은 Phase 2(도메인 & DB).
+**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 6(프론트 스캐폴딩) 🟡. 다음은 Phase 3(인증).
 
 ### 3.1 미해결 부채 — 착수 전 반드시 확인
 
@@ -216,7 +229,7 @@ docs/PRD.md 3장 (ID 부여)
 
 ### 5.9 문서 수정 시
 
-`CLAUDE.md`(**v1.8**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v1.9**)는 상단에 **버전·최종 수정일**을 가진다.
+`CLAUDE.md`(**v1.8**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.0**)는 상단에 **버전·최종 수정일**을 가진다.
 내용을 고치면 **그 문서의 버전·수정일을 함께 올린다.** 세 문서의 버전은 서로 독립이며 일치할 필요가 없다.
 
 ---
@@ -279,6 +292,12 @@ docs/PRD.md 3장 (ID 부여)
 - 엔티티에 `@Setter` 금지. 변경은 `updateCompleted(boolean)`·`softDelete()` 같은 의미 있는 메서드로.
 - `@ManyToOne`은 **반드시 `fetch = FetchType.LAZY`** 명시(기본값 EAGER).
 - 물리 삭제 금지. `deleted_at` 기록 + 모든 조회에 `deleted_at IS NULL`.
+- **감사 필드(`created_at`·`updated_at`)와 `deleted_at`은 `Instant`다. `LocalDateTime`으로 바꾸지 않는다.** 아래 두 이유 때문이며, 설정만으로는 대체되지 않는다.
+  1. **UTC 저장이 설정만으로 보장되지 않는다.** `hibernate.jdbc.time_zone: UTC`는 JDBC 바인딩 계층 설정인데, `@CreatedDate` 값을 실제로 만드는 주체는 Spring Data의 시각 공급자이고 그 기본 구현은 **시스템 기본 타임존**(개발 환경은 KST +09:00)을 쓴다. `LocalDateTime`은 타임존 정보가 없어 이 KST 벽시계 값이 이후 UTC로 재해석될 근거가 없다 → 운영(UTC)과 9시간 어긋난다.
+  2. **`CLAUDE.md` 5장의 직렬화 형식을 만족할 수 없다.** `2026-08-28T04:30:00Z`의 `Z`는 UTC를 뜻하는데 `LocalDateTime`은 타임존이 없어 이 접미사를 붙일 수 없다.
+
+  `Instant`는 정의상 UTC 기준 시점이라 공급자의 타임존과 무관하고, PostgreSQL에서 `timestamptz`로 생성된다. `due_date`만은 시각이 없어 타임존 영향을 받지 않으므로 `LocalDate`를 그대로 쓴다.
+- **`completed`·`priority`의 기본값은 DB `DEFAULT` 절이 아니라 `Todo` 생성자에 있다.** 실제 생성된 컬럼의 `column_default`는 비어 있다(2026-08-31 확인). JPA 경로는 무해하지만 **JPA를 우회한 직접 INSERT(Phase 4의 `seed-dev.sql`·`seed-perf.sql`)는 두 컬럼을 반드시 명시해야 한다.** 누락하면 NOT NULL 위반이다.
 
 ---
 

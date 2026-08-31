@@ -1,6 +1,6 @@
 # ROADMAP — Todo List 프로젝트
 
-> **버전** 1.9 · **최종 수정** 2026-08-28
+> **버전** 2.0 · **최종 수정** 2026-08-31
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -13,7 +13,7 @@
 |---|---|---|---|
 | 0 | 저장소 초기화 | 전체 | ✅ |
 | 1 | 백엔드 스캐폴딩 | backend | ✅ |
-| 2 | 도메인 & DB | backend | ⬜ |
+| 2 | 도메인 & DB | backend | ✅ |
 | 3 | 인증 (로컬) + 인증 테스트 | backend | ⬜ |
 | 4 | Todo API + Todo 테스트 | backend | ⬜ |
 | 5 | 구글 OAuth2 + OAuth 테스트 | backend | ⬜ |
@@ -193,12 +193,33 @@
 - Repository 테스트에 **`@AutoConfigureTestDatabase(replace = NONE)` + `@ActiveProfiles("test")`** 필수 (없으면 임베디드 DB로 교체 시도)
 
 **DoD**
-- [ ] 애플리케이션 기동 시 `users`, `todos` 테이블 자동 생성
-- [ ] `created_at`, `updated_at` 자동 기록 확인
-- [ ] Repository 단위 테스트(`@DataJpaTest`) 통과 — **통합 테스트 번호 체계(1~8)와 별개**
-- [ ] 테스트가 `todolist_test`를 바라보고 실행됨 (H2 사용하지 않음)
-- [ ] `@DataJpaTest`에서 `created_at`이 null이 아님 (Auditing 정상 동작)
-- [ ] 저장된 `created_at`이 UTC 기준임 (KST로 9시간 밀리지 않음)
+- [x] 애플리케이션 기동 시 `users`, `todos` 테이블 자동 생성
+- [x] `created_at`, `updated_at` 자동 기록 확인
+- [x] Repository 단위 테스트(`@DataJpaTest`) 통과 — **통합 테스트 번호 체계(1~8)와 별개**
+- [x] 테스트가 `todolist_test`를 바라보고 실행됨 (H2 사용하지 않음)
+- [x] `@DataJpaTest`에서 `created_at`이 null이 아님 (Auditing 정상 동작)
+- [x] 저장된 `created_at`이 UTC 기준임 (KST로 9시간 밀리지 않음)
+
+> **검증 기록 (2026-08-31)** — 6항목 전부 통과. 근거는 이번 검증 세션의 실제 명령 출력이다.
+>
+> | DoD | 근거 |
+> |---|---|
+> | 1 | 착수 시점 `todolist_db` 테이블 0개 → 기동 후 `users`·`todos` 생성. 로그에 `create table` DDL |
+> | 2 | `created_at`·`updated_at` 모두 `is_nullable=NO`, `deleted_at`만 `YES` |
+> | 3 | `./mvnw clean test` **exit 0**, `Tests run: 14, Failures: 0, Errors: 0` |
+> | 4 | Hikari 로그 `jdbcUrl...localhost:5432/todolist_test`. 의존성에 h2·hsqldb·derby **0건** |
+> | 5 | `auditingFieldsArePopulated` 2건 통과 |
+> | 6 | `createdAtIsStoredInUtc`·`auditColumnsAreTimestampTz` 통과. **DB 서버 타임존이 `Asia/Seoul`인 환경에서 통과**해 실질 검증 |
+>
+> 인덱스 `idx_todos_user_deleted`는 `pg_indexes`에서 `btree (user_id, deleted_at)` **실물 생성**을 확인했다.
+> `@Table`의 `indexes`는 ddl-auto가 테이블을 새로 만들 때만 반영되므로, 선언만 있고 실물이 없는 상태를 따로 검출해야 한다.
+>
+> ⚠️ **`completed`·`priority`에 DB `DEFAULT` 절이 생성되지 않는다.** 기본값은 `Todo` 생성자에서
+> 애플리케이션 레벨로 채워진다(`defaultPriorityIsMedium`으로 검증). JPA 경로는 무해하나,
+> **Phase 4의 `seed-dev.sql`·`seed-perf.sql`은 JPA를 우회한 직접 INSERT라 두 컬럼을 반드시 명시해야 한다.**
+> 누락하면 NOT NULL 위반으로 실패한다.
+>
+> 참고: 4장 표기는 `TIMESTAMP`이나 실물은 `timestamptz`다. `Instant` 선택의 결과이자 UTC 보장의 핵심이므로 구현이 옳다.
 
 ---
 
