@@ -1,6 +1,6 @@
 # ROADMAP — Todo List 프로젝트
 
-> **버전** 2.0 · **최종 수정** 2026-08-31
+> **버전** 2.1 · **최종 수정** 2026-09-01
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -14,7 +14,7 @@
 | 0 | 저장소 초기화 | 전체 | ✅ |
 | 1 | 백엔드 스캐폴딩 | backend | ✅ |
 | 2 | 도메인 & DB | backend | ✅ |
-| 3 | 인증 (로컬) + 인증 테스트 | backend | ⬜ |
+| 3 | 인증 (로컬) + 인증 테스트 | backend | ✅ |
 | 4 | Todo API + Todo 테스트 | backend | ⬜ |
 | 5 | 구글 OAuth2 + OAuth 테스트 | backend | ⬜ |
 | 6 | 프론트 스캐폴딩 | frontend | 🟡 |
@@ -242,21 +242,79 @@
 - **통합 테스트 1~3번 작성**
 
 **DoD**
-- [ ] **`POST /api/v1/auth/signup`이 403이 아니라 200/409로 응답** (CSRF 비활성화 확인 — 안 하면 여기서 전부 막힌다)
-- [ ] **응답에 `Set-Cookie: JSESSIONID`가 없음** (`STATELESS` 세션 정책 확인)
-- [ ] 회원가입 → 사용자 생성 + JWT 반환
-- [ ] **한글 25자 비밀번호로 가입 시 500이 아니라 400 `INVALID_INPUT`** (BCrypt 72바이트 한계 — `CLAUDE.md` 4장)
-- [ ] 중복 이메일 시 409 `EMAIL_DUPLICATED`
-- [ ] 로그인 성공 시 유효 JWT, 실패 시 401
-- [ ] **미가입 이메일로 로그인한 401과 비밀번호가 틀린 401의 `code`·`message`가 완전히 동일함** (계정 존재 여부를 구분 노출하지 않는다 — `PRD.md` 5.1)
-- [ ] 토큰 없이 `/api/v1/auth/me` 호출 시 401
-- [ ] `/api/v1/auth/me` 응답에 `nickname`과 `email`이 모두 포함됨 (AUTH-08 — 화면 표시 여부는 Phase 7에서 통제)
-- [ ] 비밀번호가 DB에 해시로 저장됨
-- [ ] **Security 도입 후에도 Swagger UI 접속 가능** (Phase 1 DoD 회귀 방지)
-- [ ] Swagger Authorize에 토큰을 넣고 `/auth/me` 호출이 200으로 성공
-- [ ] 모든 응답이 `{success, data, error}` 포맷을 따름
-- [ ] **토큰 없이 호출한 401 응답도** `{success:false, error:{code:"UNAUTHORIZED"}}` 포맷임
-- [ ] **인증 통합 테스트 3건 통과**
+- [x] **`POST /api/v1/auth/signup`이 403이 아니라 200/409로 응답** (CSRF 비활성화 확인 — 안 하면 여기서 전부 막힌다)
+- [x] **응답에 `Set-Cookie: JSESSIONID`가 없음** (`STATELESS` 세션 정책 확인)
+- [x] 회원가입 → 사용자 생성 + JWT 반환
+- [x] **한글 25자 비밀번호로 가입 시 500이 아니라 400 `INVALID_INPUT`** (BCrypt 72바이트 한계 — `CLAUDE.md` 4장)
+- [x] 중복 이메일 시 409 `EMAIL_DUPLICATED`
+- [x] 로그인 성공 시 유효 JWT, 실패 시 401
+- [x] **미가입 이메일로 로그인한 401과 비밀번호가 틀린 401의 `code`·`message`가 완전히 동일함** (계정 존재 여부를 구분 노출하지 않는다 — `PRD.md` 5.1)
+- [x] 토큰 없이 `/api/v1/auth/me` 호출 시 401
+- [x] `/api/v1/auth/me` 응답에 `nickname`과 `email`이 모두 포함됨 (AUTH-08 — 화면 표시 여부는 Phase 7에서 통제)
+- [x] 비밀번호가 DB에 해시로 저장됨
+- [x] **Security 도입 후에도 Swagger UI 접속 가능** (Phase 1 DoD 회귀 방지)
+- [x] Swagger Authorize에 토큰을 넣고 `/auth/me` 호출이 200으로 성공 — ⚠️ **브라우저 미조작. `curl` 대체 검증**(아래 기록 참조)
+- [x] 모든 응답이 `{success, data, error}` 포맷을 따름
+- [x] **토큰 없이 호출한 401 응답도** `{success:false, error:{code:"UNAUTHORIZED"}}` 포맷임
+- [x] **인증 통합 테스트 3건 통과**
+
+> **검증 기록 (2026-09-01)** — 15항목 전부 통과. 근거는 이번 검증 세션의 실제 명령 출력이다.
+>
+> 판정 경로는 둘이다. **테스트 경로**는 `DB_PASSWORD` 주입 후 `./mvnw clean test`(**exit 0**, `Tests run: 26`)이고,
+> **기동 경로**는 환경변수 5종을 주입한 `./mvnw spring-boot:run` + `curl`이다.
+> ⚠️ 기동 포트는 **8081**이다. 8080을 무관한 타 프로젝트(`com.hi.mallapi.MallapiApplication`)가 점유 중이어서
+> 그 프로세스를 종료하지 않고 `SERVER_PORT`로 우회했다. 포트 번호는 판정에 영향을 주지 않는다.
+>
+> | DoD | 근거 |
+> |---|---|
+> | 1 | `curl -i POST /api/v1/auth/signup` → `HTTP/1.1 200`. 403이 아님 |
+> | 2 | 같은 응답 헤더에 `Set-Cookie` **자체가 없음**(헤더 부재로 확인) |
+> | 3 | 응답 `data.token` 발급 + `psql`로 `users` 행 생성 확인 |
+> | 4 | **75바이트를 바이트 단위로 생성해 전송** → `400` + `"password: 비밀번호가 너무 깁니다…"` |
+> | 5 | 동일 이메일 재요청 → `409` `EMAIL_DUPLICATED` |
+> | 6 | 로그인 `200` + JWT. 페이로드 `sub:"4"`(id), `exp - iat = 86400`(24시간) |
+> | 7 | 두 401 응답 본문을 `diff`로 대조 → **완전 일치**. 상태 코드도 동일 |
+> | 8 | 토큰 없이 `GET /auth/me` → `HTTP/1.1 401` |
+> | 9 | 유효 토큰으로 `200` + `{"id","email","nickname"}` 전부 포함 |
+> | 10 | `psql`로 `todolist_db` 조회 → `$2a$10$` 접두, 60자, 평문과 불일치 |
+> | 11 | `/swagger-ui/index.html` → `200` (302 아님) |
+> | 12 | **⚠️ 대체 검증** — 아래 별도 항목 참조 |
+> | 13 | 성공·실패 응답 모두 `success`·`data`·`error` 3키 확인 |
+> | 14 | 필터 단계 401 본문이 `{"success":false,"data":null,"error":{"code":"UNAUTHORIZED",…}}` |
+> | 15 | `AuthControllerTest` 12건 통과(시나리오 3묶음). 기존 14건 회귀 없음 |
+>
+> #### DoD 12를 브라우저로 검증하지 않았다
+>
+> Swagger UI의 Authorize 버튼을 **실제로 누르지 않았다.** `curl` 두 가지로 대체했다.
+>
+> 1. `/v3/api-docs`의 `components.securitySchemes.bearerAuth`가 `type:http`·`scheme:bearer`·`bearerFormat:JWT`이고,
+>    전역 `security`와 `/api/v1/auth/me` 오퍼레이션 `security`에 모두 `bearerAuth`가 걸려 있음 → **버튼이 렌더되는 근거**
+> 2. 발급 토큰을 `Authorization: Bearer`로 넣은 `/auth/me`가 `200` → **버튼에 토큰을 넣었을 때와 같은 경로**
+>
+> 둘이 성립하면 브라우저 조작도 성공하는 것이 따라오지만, **직접 확인한 것은 아니다.**
+>
+> #### 검증 중 발견해 조치한 사항 — JWT가 HS256이 아니었다
+>
+> 발급 토큰 헤더가 `{"alg":"HS384"}`였다. `CLAUDE.md` 12장의 **"HS256으로 고정한다"** 규정과 어긋난다.
+> 원인은 `JwtTokenProvider`가 `signWith(key)`를 인자 없이 호출한 것이다. jjwt의 `Keys.hmacShaKeyFor()`는
+> **키 길이로 알고리즘을 추론**한다(32~47B→HS256, 48~63B→HS384, 64B+→HS512). 즉 알고리즘을 코드가 아니라
+> **`JWT_SECRET`의 길이가 결정**하는 상태였다. 로컬과 운영의 시크릿 길이가 다르면 알고리즘이 갈린다.
+>
+> → `.signWith(key, Jwts.SIG.HS256)`으로 알고리즘을 명시했다. **같은 49바이트 시크릿으로 재기동해**
+> 토큰 헤더가 `{"alg":"HS256"}`으로 바뀐 것과 전체 테스트 26건이 그대로 통과함을 확인했다.
+> 조건을 하나만 바꿔야 인과가 증명되므로 시크릿 길이는 일부러 유지했다.
+>
+> #### 확인했으나 조치하지 않은 사항 — `/swagger-ui.html`이 401
+>
+> Swagger 진입 주소가 둘인데 하나만 열려 있다. `/swagger-ui/index.html`은 `200`이고 `/swagger-ui.html`은 `401`이다.
+> **`CLAUDE.md` 6장의 `permitAll` 경로 목록에 후자가 없기 때문이며, 현재 코드는 스펙을 정확히 따른 결과다.**
+> DoD 11의 판정 기준이 전자이므로 판정에는 영향이 없다. 다만 **기동 로그가 후자를 안내**하므로
+> (`SpringDoc /swagger-ui.html endpoint is enabled by default`) 혼동의 여지가 있다.
+> 고치려면 스펙의 경로 목록부터 바꿔야 하므로, 임의로 추가하지 않고 이 기록만 남긴다.
+>
+> #### 검증 잔여물
+>
+> `todolist_db.users`에 검증용 계정이 남아 있다(`id` 4·5·6). Phase 4의 시드 스크립트 작업 전에 정리한다.
 
 ---
 

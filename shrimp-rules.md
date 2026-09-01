@@ -1,7 +1,7 @@
 # 개발 규칙 (shrimp-rules.md)
 
 > **대상**: 이 저장소에서 작업하는 Coding Agent 전용. 사람을 위한 튜토리얼이 아니다.
-> **최종 검증**: 2026-08-31 · 실제 파일 스캔 기준
+> **최종 검증**: 2026-09-01 · 실제 파일 스캔 기준
 > **이 문서의 지위**: **작업 절차 규칙**이다. **기술 스펙의 정본이 아니다.**
 > 스펙이 필요하면 `CLAUDE.md`를 읽는다. 이 문서는 "무엇을, 어느 파일을, 어떤 순서로 함께 고치는가"만 정의한다.
 
@@ -46,19 +46,24 @@
 
 ---
 
-## 3. 현재 상태 스냅샷 (2026-08-31 검증)
+## 3. 현재 상태 스냅샷 (2026-09-01 검증)
 
 작업 착수 전 이 표와 실제 상태가 같은지 확인한다. 다르면 이 절을 먼저 갱신한다.
 
 | 저장소 | 브랜치 | 커밋 | 원격 | 비고 |
 |---|---|---|---|---|
-| `todo-project` | `main` (+ `develop`, 동일 해시) | 2 (`72d1fd1`) | `origin` 푸시 완료 | 21파일. 태그 `v0.0.0` |
-| `todo-backend` | `main` (`6f9f609`) · `develop` (`0057e44`) · **`feature/phase2-domain-db` (`0851e0a`) 체크아웃 중** | main 4 | `main`·`develop` 푸시 완료. **feature 브랜치는 미푸시** | 25파일. 태그 `v0.0.0`, `v0.1.0` |
-| `todo-frontend` | `main` (+ `develop`, 동일 해시) | 1 (`c62d5b6`) | `origin` 푸시 완료 | 22파일. 태그 `v0.0.0` |
+| `todo-project` | `main` (`0340c15`) · `develop` (`7505dbc`) | main 5 | `main`·`develop` 푸시 완료 | 21파일. 태그 `v0.0.0` |
+| `todo-backend` | `main` (`443668d`) · `develop` (`3e6d9c4`) · **`feature/phase3-auth` 체크아웃 중** | main 7 | `main`·`develop` 푸시 완료 | 25파일 추적. 태그 `v0.0.0`, `v0.1.0`, `v0.2.0` |
+| `todo-frontend` | `main` (+ `develop`, 동일 해시 `c62d5b6`) | 1 | `origin` 푸시 완료 | 22파일. 태그 `v0.0.0` |
 
 **세 저장소 모두 `develop` 분기 + `origin` 푸시 완료이며, `master`는 없다.**
-다만 `todo-backend`만 형태가 다르다. Phase 2 작업분이 `feature/phase2-domain-db`에 커밋되어 있고 **아직 `develop`에 병합되지 않았다.**
+태그 3종은 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.2.0`은 `443668d`(= `main`)를 가리킨다.
 `main`이 `develop`보다 병합 커밋 하나만큼 앞선 구조는 Phase 1에서 확립된 패턴이며 오류가 아니다.
+
+⚠️ **`todo-backend`의 Phase 3 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
+`feature/phase3-auth` 브랜치의 **작업 트리에 12건의 미커밋 변경**(수정 2 + 신규 10)으로 존재한다.
+커밋·병합·태그 `v0.3.0`은 사용자 승인 후 별도 태스크에서 수행한다. 아래 소스 목록은 **작업 트리 기준**이다.
+
 원격은 `git@github.com:stygia98/{todo-project,todo-backend,todo-frontend}.git`이다(언더스코어 이름은 301 리다이렉트로만 남아 있다).
 
 ⚠️ **앞으로의 작업은 `feature/{작업명}` → `develop` → `main` 순서다.** `main`에 직접 커밋하지 않는다.
@@ -67,8 +72,16 @@
 
 ```
 todo-backend/src/main/java/com/example/TodoBackendApplication.java   # @SpringBootApplication + @EnableJpaAuditing
-todo-backend/src/main/java/com/example/config/SecurityConfig.java    # 최소 인가 골격 (Phase 3에서 확장)
+
+# --- config (Phase 1: 2개 / Phase 3: 4개 추가) ---
+todo-backend/src/main/java/com/example/config/SecurityConfig.java    # [P3 확장] csrf.disable, STATELESS, permitAll, CORS, exceptionHandling
 todo-backend/src/main/java/com/example/config/OpenApiConfig.java     # bearerAuth 스킴
+todo-backend/src/main/java/com/example/config/JwtTokenProvider.java  # [P3] 발급·검증. signWith(key, Jwts.SIG.HS256)
+todo-backend/src/main/java/com/example/config/JwtAuthenticationFilter.java     # [P3] sub → id 조회, deleted_at IS NULL
+todo-backend/src/main/java/com/example/config/JwtAuthenticationEntryPoint.java # [P3] 필터 단계 401을 ApiResponse 포맷으로
+todo-backend/src/main/java/com/example/config/JwtAccessDeniedHandler.java      # [P3] 필터 단계 403을 ApiResponse 포맷으로
+
+# --- domain (Phase 2) ---
 todo-backend/src/main/java/com/example/domain/BaseEntity.java        # @MappedSuperclass, 감사 필드(Instant)
 todo-backend/src/main/java/com/example/domain/User.java              # users
 todo-backend/src/main/java/com/example/domain/Todo.java              # todos, @Index(idx_todos_user_deleted), user는 LAZY
@@ -76,22 +89,46 @@ todo-backend/src/main/java/com/example/domain/AuthProvider.java      # LOCAL / G
 todo-backend/src/main/java/com/example/domain/Priority.java          # HIGH / MEDIUM / LOW
 todo-backend/src/main/java/com/example/domain/UserRepository.java    # deleted_at IS NULL 조건 포함
 todo-backend/src/main/java/com/example/domain/TodoRepository.java    # deleted_at IS NULL 조건 포함
+
+# --- Phase 3 신규 패키지 ---
+todo-backend/src/main/java/com/example/controller/AuthController.java  # signup / login / me. 로그아웃 API 없음
+todo-backend/src/main/java/com/example/service/AuthService.java        # 로그인 실패는 단일 ErrorCode
+todo-backend/src/main/java/com/example/dto/ApiResponse.java            # {success, data, error} 공통 봉투
+todo-backend/src/main/java/com/example/dto/SignupRequest.java
+todo-backend/src/main/java/com/example/dto/LoginRequest.java           # @NotBlank만. @Email을 걸지 않는다
+todo-backend/src/main/java/com/example/dto/TokenResponse.java
+todo-backend/src/main/java/com/example/dto/UserResponse.java
+todo-backend/src/main/java/com/example/exception/ErrorCode.java        # 6종. UNAUTHORIZED가 로그인 실패 전용
+todo-backend/src/main/java/com/example/exception/BusinessException.java
+todo-backend/src/main/java/com/example/exception/GlobalExceptionHandler.java
+todo-backend/src/main/java/com/example/validation/MaxByteLength.java          # 스펙 구조도에 없는 신설 패키지
+todo-backend/src/main/java/com/example/validation/MaxByteLengthValidator.java # BCrypt 72바이트 검증
+
 todo-backend/src/main/resources/{application,application-local,application-prod}.yml
 todo-backend/src/test/java/com/example/TodoBackendApplicationTests.java    # contextLoads
 todo-backend/src/test/java/com/example/domain/UserRepositoryTest.java      # @DataJpaTest 5건
 todo-backend/src/test/java/com/example/domain/TodoRepositoryTest.java      # @DataJpaTest 8건
-todo-backend/src/test/resources/application-test.yml                       # todolist_test, create-drop
+todo-backend/src/test/java/com/example/controller/AuthControllerTest.java  # [P3] @SpringBootTest + MockMvc 12건
+todo-backend/src/test/resources/application-test.yml                       # todolist_test, create-drop + [P3] jwt·app 픽스처
 
 todo-frontend/src/app/{layout.tsx,page.tsx,globals.css}              # create-next-app 기본값
 todo-frontend/src/components/ui/button.tsx                           # shadcn 버튼 1개
 todo-frontend/src/lib/utils.ts                                       # cn()
 ```
 
-백엔드 테스트는 **총 14건**이다(`TodoRepositoryTest` 8 + `UserRepositoryTest` 5 + `contextLoads` 1).
-`service/`, `controller/`, `dto/`, `exception/` 패키지는 **디렉토리만 있고 클래스가 없다.** `domain/`과 `config/`에는 위 클래스들이 있다.
-`src/hooks/`, `src/types/`, `src/components/{common,todo}/`도 **아직 없다.**
+백엔드 테스트는 **총 26건**이다(`AuthControllerTest` 12 + `TodoRepositoryTest` 8 + `UserRepositoryTest` 5 + `contextLoads` 1).
+`AuthControllerTest`의 12건은 `CLAUDE.md` 14장이 말하는 **"통합 테스트 1~3번"을 `@Nested` 세 묶음으로 구현한 것**이다.
+"3건"은 시나리오 수이지 `@Test` 메서드 수가 아니므로, 12와 3이 어긋난 것이 아니다.
 
-**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 6(프론트 스캐폴딩) 🟡. 다음은 Phase 3(인증).
+`domain/`·`config/`·`controller/`·`service/`·`dto/`·`exception/`·`validation/`에 모두 클래스가 있다.
+**Phase 4 이후에 추가될 것은 `TodoController`·`TodoService`·`HtmlSanitizer`·`PageResponse`·Todo DTO 3종이다.**
+프론트의 `src/hooks/`, `src/types/`, `src/components/{common,todo}/`는 **아직 없다.**
+
+⚠️ **`validation/` 패키지는 `CLAUDE.md` 2장 구조도에 없다.** 임의 추가가 아니라, 4장이 요구한
+`@MaxByteLength` 커스텀 validator를 둘 곳이 필요해 신설했다. 구조도는 예시이지 금지 목록이 아니며,
+검증 애노테이션을 `dto/`에 섞으면 DTO와 재사용 가능한 제약이 뒤엉킨다. **스펙 변경이 아니므로 `CLAUDE.md`를 고치지 않았다.**
+
+**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 6(프론트 스캐폴딩) 🟡. 다음은 Phase 4(Todo API).
 
 ### 3.1 미해결 부채 — 착수 전 반드시 확인
 
@@ -103,6 +140,12 @@ todo-frontend/src/lib/utils.ts                                       # cn()
 | 4 | 프론트 미설치 | `motion`, `@tiptap/react`, `@tiptap/starter-kit`, `@tanstack/react-query`, `dompurify`, `date-fns`, `sonner` | Phase 6 |
 | 5 | 프론트 `.env.example` | 파일이 아직 없다 (무시 규칙은 준비됨) | Phase 6 |
 | 6 | Pretendard 폰트 | `src/app/fonts/` 없음 | Phase 6 |
+| 7 | **없는 URL이 404가 아니라 500** | `GlobalExceptionHandler`의 catch-all `Exception` 핸들러가 Spring의 `NoResourceFoundException`을 잡아 `INTERNAL_ERROR`(500)로 응답한다. 404여야 한다. **`ErrorCode` 6종에 쓸 값이 없어 보류 중이다** — `TODO_NOT_FOUND`는 메시지가 "할 일을 찾을 수 없습니다"라 API 경로 오류에 쓰면 어긋난다 | Phase 4 |
+
+> **부채 7 처리 절차** — 코드보다 **스펙을 먼저 고친다.** `CLAUDE.md` 11장 에러 표에 `NOT_FOUND`(404)를 추가하고
+> 버전을 올린 뒤, `ErrorCode`에 상수를 넣고 `GlobalExceptionHandler`에 `NoResourceFoundException` 핸들러를 붙인다.
+> Phase 3 종료 시점에 함께 처리하지 않은 이유는, **DoD 15항목 검증을 막 통과하고 태그 직전인 코드를 비-DoD 항목으로 흔들지 않기 위해서**다.
+> 스펙 변경이 필요한 사항이므로 착수 전 사용자 승인을 받는다.
 
 ### 3.2 해소된 부채 (2026-08-28)
 
@@ -229,8 +272,10 @@ docs/PRD.md 3장 (ID 부여)
 
 ### 5.9 문서 수정 시
 
-`CLAUDE.md`(**v1.8**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.0**)는 상단에 **버전·최종 수정일**을 가진다.
+`CLAUDE.md`(**v1.9**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.1**)는 상단에 **버전·최종 수정일**을 가진다.
 내용을 고치면 **그 문서의 버전·수정일을 함께 올린다.** 세 문서의 버전은 서로 독립이며 일치할 필요가 없다.
+
+⚠️ **이 줄의 버전 번호도 함께 고친다.** 대상 문서만 올리고 여기를 두면 규칙 문서가 거짓이 된다.
 
 ---
 
@@ -286,6 +331,27 @@ docs/PRD.md 3장 (ID 부여)
 
 `todo-backend/.gitattributes`(`/mvnw text eol=lf`)는 **이미 있다. 삭제하지 않는다.**
 
+**테스트·기동에는 환경변수 주입이 필요하다.** `application-test.yml`과 `application.yml`이 기본값 없이 참조하기 때문이다.
+
+| 목적 | 필요한 환경변수 |
+|---|---|
+| `mvnw test` | `DB_PASSWORD` |
+| `mvnw spring-boot:run` | `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`(raw UTF-8 32자 이상), `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS` |
+
+⚠️ **`JAVA_HOME`과 PATH의 JDK가 다르다** (2026-09-01 실측).
+
+| 경로 | 버전 |
+|---|---|
+| `JAVA_HOME` (`C:\SpringBootProject\zulu21`) | **21.0.12.1** ← 프로젝트 요구 버전 |
+| PATH의 `java` / `javac` | **17.0.19** |
+
+`mvnw`는 `JAVA_HOME`을 우선 쓰므로 **Maven 빌드는 정상**이다. 그러나 Maven 밖에서 `javac`를 직접 호출하면
+`wrong version 65.0, should be 61.0` 오류가 난다. `CLAUDE.md` 13장이 경고한 상황이 실제로 존재하는 환경이므로,
+빌드가 되는데 다른 도구만 실패하면 이것부터 의심한다.
+
+⚠️ **8080 포트를 무관한 타 프로젝트가 점유하고 있을 수 있다** (2026-09-01 기준 `com.hi.mallapi.MallapiApplication`).
+남의 프로세스를 종료하지 말고 `SERVER_PORT=8081` 등으로 우회한다. 포트 번호는 DoD 판정에 영향을 주지 않는다.
+
 ### 6.6 계층 규칙
 
 - 컨트롤러는 **엔티티를 반환하지 않는다.** 항상 DTO(`record`).
@@ -298,6 +364,26 @@ docs/PRD.md 3장 (ID 부여)
 
   `Instant`는 정의상 UTC 기준 시점이라 공급자의 타임존과 무관하고, PostgreSQL에서 `timestamptz`로 생성된다. `due_date`만은 시각이 없어 타임존 영향을 받지 않으므로 `LocalDate`를 그대로 쓴다.
 - **`completed`·`priority`의 기본값은 DB `DEFAULT` 절이 아니라 `Todo` 생성자에 있다.** 실제 생성된 컬럼의 `column_default`는 비어 있다(2026-08-31 확인). JPA 경로는 무해하지만 **JPA를 우회한 직접 INSERT(Phase 4의 `seed-dev.sql`·`seed-perf.sql`)는 두 컬럼을 반드시 명시해야 한다.** 누락하면 NOT NULL 위반이다.
+
+### 6.7 Phase 3에서 확정된 규칙
+
+아래 넷은 **잘못 써도 컴파일이 통과하거나 테스트가 통과해버리는** 종류라 규칙으로 고정한다.
+
+- **`ObjectMapper`는 `tools.jackson.databind` 쪽이며 `new`하지 않고 주입받는다.** Boot 4의 직렬화 엔진은 Jackson 3(`tools.jackson`)인데, `springdoc`과 `jjwt-jackson`이 Jackson 2(`com.fasterxml.jackson`)를 compile scope로 함께 끌고 온다. **잘못된 쪽을 import해도 컴파일은 통과한다.** 직접 `new`하면 Boot가 구성한 설정을 잃는다. `JwtAuthenticationEntryPoint`·`JwtAccessDeniedHandler`가 이 방식이며, 테스트도 같은 빈을 주입받아 프로덕션과 타입을 맞춘다.
+- **로그인 실패는 원인과 무관하게 `ErrorCode.UNAUTHORIZED` 하나만 던진다.** 미가입·소셜 전용 계정·비밀번호 불일치를 구분해 응답하면 계정 존재 여부가 노출된다(`PRD.md` 5.1). **"메시지를 둘 만든 뒤 같게 맞추는" 방식을 쓰지 않는다.** 한쪽만 수정되면 조용히 갈라진다. 단일 코드로 모아 **애초에 갈릴 수 없는 구조**로 둔다.
+- **JWT 서명은 `signWith(key, Jwts.SIG.HS256)`으로 알고리즘을 명시한다.** 인자 없는 `signWith(key)`를 쓰면 jjwt가 **키 길이로 알고리즘을 추론**한다(32~47B→HS256, 48~63B→HS384, 64B+→HS512). 즉 코드가 아니라 `JWT_SECRET`의 길이가 알고리즘을 결정하게 되어, 환경마다 시크릿 길이가 다르면 로컬과 운영이 갈린다. Phase 3 DoD 검증에서 49바이트 시크릿이 실제로 `alg=HS384`를 발급해 발견했다. 상수는 0.11의 `SignatureAlgorithm` enum이 아니라 **0.12의 `Jwts.SIG`**를 쓴다.
+- **Boot 4는 테스트 애노테이션 패키지가 재편됐다.** 인터넷 예제를 그대로 옮기면 컴파일에 실패한다. jar를 열어 확인한 실측값이다.
+
+  | 애노테이션 | Boot 4 경로 |
+  |---|---|
+  | `@SpringBootTest` | `org.springframework.boot.test.context` (**기존과 동일**) |
+  | `@AutoConfigureMockMvc` | `org.springframework.boot.webmvc.test.autoconfigure` |
+  | `@DataJpaTest` | `org.springframework.boot.data.jpa.test.autoconfigure` |
+  | `@AutoConfigureTestDatabase` | `org.springframework.boot.jdbc.test.autoconfigure` |
+
+  `@SpringBootTest`만 경로가 그대로라 **둘이 갈린다는 점**이 함정이다.
+
+- **`application-test.yml`에 `jwt.secret`·`app.frontend-url`·`app.cors.allowed-origins`를 리터럴로 둔다.** Phase 3부터 `JwtTokenProvider`가 생성자에서, `SecurityConfig`가 필드에서 이 값을 읽어 `@SpringBootTest` 기동에 필수가 됐다(Phase 2까지 통과한 이유는 플레이스홀더를 읽는 빈이 없어 해석 자체가 일어나지 않아서다). **`DB_PASSWORD`는 실제 자격증명이므로 여기에 기본값을 심지 않는다.** 테스트 실행에는 환경변수 주입이 필요하다.
 
 ---
 
