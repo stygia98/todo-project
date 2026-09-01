@@ -53,16 +53,16 @@
 | 저장소 | 브랜치 | 커밋 | 원격 | 비고 |
 |---|---|---|---|---|
 | `todo-project` | `main` (`0340c15`) · `develop` (`7505dbc`) | main 5 | `main`·`develop` 푸시 완료 | 21파일. 태그 `v0.0.0` |
-| `todo-backend` | `main` (`443668d`) · `develop` (`3e6d9c4`) · **`feature/phase3-auth` 체크아웃 중** | main 7 | `main`·`develop` 푸시 완료 | 25파일 추적. 태그 `v0.0.0`, `v0.1.0`, `v0.2.0` |
+| `todo-backend` | `main` (`b4ff5f4`) · `develop` (`49a6bb5`) | main 13 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`, `v0.1.0`, `v0.2.0`, `v0.3.0` |
 | `todo-frontend` | `main` (+ `develop`, 동일 해시 `c62d5b6`) | 1 | `origin` 푸시 완료 | 22파일. 태그 `v0.0.0` |
 
 **세 저장소 모두 `develop` 분기 + `origin` 푸시 완료이며, `master`는 없다.**
-태그 3종은 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.2.0`은 `443668d`(= `main`)를 가리킨다.
+태그 4종은 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.3.0`은 `b4ff5f4`(= `main`)를 가리킨다.
 `main`이 `develop`보다 병합 커밋 하나만큼 앞선 구조는 Phase 1에서 확립된 패턴이며 오류가 아니다.
 
-⚠️ **`todo-backend`의 Phase 3 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
-`feature/phase3-auth` 브랜치의 **작업 트리에 12건의 미커밋 변경**(수정 2 + 신규 10)으로 존재한다.
-커밋·병합·태그 `v0.3.0`은 사용자 승인 후 별도 태스크에서 수행한다. 아래 소스 목록은 **작업 트리 기준**이다.
+⚠️ **`todo-backend`의 Phase 4 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
+`main` 브랜치 작업 트리에 **17건의 미커밋 변경**(수정 4 + 신규 13)으로 존재한다.
+커밋·병합·태그 `v0.4.0`은 사용자 승인 후 별도 태스크에서 수행한다. 아래 소스 목록은 **작업 트리 기준**이다.
 
 원격은 `git@github.com:stygia98/{todo-project,todo-backend,todo-frontend}.git`이다(언더스코어 이름은 301 리다이렉트로만 남아 있다).
 
@@ -81,14 +81,15 @@ todo-backend/src/main/java/com/example/config/JwtAuthenticationFilter.java     #
 todo-backend/src/main/java/com/example/config/JwtAuthenticationEntryPoint.java # [P3] 필터 단계 401을 ApiResponse 포맷으로
 todo-backend/src/main/java/com/example/config/JwtAccessDeniedHandler.java      # [P3] 필터 단계 403을 ApiResponse 포맷으로
 
-# --- domain (Phase 2) ---
+# --- domain (Phase 2 기본 + Phase 4 확장) ---
 todo-backend/src/main/java/com/example/domain/BaseEntity.java        # @MappedSuperclass, 감사 필드(Instant)
 todo-backend/src/main/java/com/example/domain/User.java              # users
-todo-backend/src/main/java/com/example/domain/Todo.java              # todos, @Index(idx_todos_user_deleted), user는 LAZY
+todo-backend/src/main/java/com/example/domain/Todo.java              # todos, @Index(idx_todos_user_deleted), user는 LAZY. Phase 4에서도 미수정
 todo-backend/src/main/java/com/example/domain/AuthProvider.java      # LOCAL / GOOGLE
 todo-backend/src/main/java/com/example/domain/Priority.java          # HIGH / MEDIUM / LOW
 todo-backend/src/main/java/com/example/domain/UserRepository.java    # deleted_at IS NULL 조건 포함
-todo-backend/src/main/java/com/example/domain/TodoRepository.java    # deleted_at IS NULL 조건 포함
+todo-backend/src/main/java/com/example/domain/TodoRepository.java    # [P4 수정] JpaSpecificationExecutor 확장. 기존 2메서드 유지
+todo-backend/src/main/java/com/example/domain/TodoSpecifications.java # [P4 신규] ownedBy/completedIs/titleContains. @Query 대신 채택한 이유는 6.7 참조
 
 # --- Phase 3 신규 패키지 ---
 todo-backend/src/main/java/com/example/controller/AuthController.java  # signup / login / me. 로그아웃 API 없음
@@ -98,17 +99,31 @@ todo-backend/src/main/java/com/example/dto/SignupRequest.java
 todo-backend/src/main/java/com/example/dto/LoginRequest.java           # @NotBlank만. @Email을 걸지 않는다
 todo-backend/src/main/java/com/example/dto/TokenResponse.java
 todo-backend/src/main/java/com/example/dto/UserResponse.java
-todo-backend/src/main/java/com/example/exception/ErrorCode.java        # 6종. UNAUTHORIZED가 로그인 실패 전용
+todo-backend/src/main/java/com/example/exception/ErrorCode.java        # [P4 수정] NOT_FOUND·METHOD_NOT_ALLOWED 추가로 8종
 todo-backend/src/main/java/com/example/exception/BusinessException.java
-todo-backend/src/main/java/com/example/exception/GlobalExceptionHandler.java
+todo-backend/src/main/java/com/example/exception/GlobalExceptionHandler.java  # [P4 수정] NoResourceFoundException·HttpRequestMethodNotSupportedException 핸들러 추가
 todo-backend/src/main/java/com/example/validation/MaxByteLength.java          # 스펙 구조도에 없는 신설 패키지
 todo-backend/src/main/java/com/example/validation/MaxByteLengthValidator.java # BCrypt 72바이트 검증
+
+# --- Phase 4 신규 패키지 ---
+todo-backend/src/main/java/com/example/controller/TodoController.java  # 6엔드포인트. 클래스에 @SecurityRequirement
+todo-backend/src/main/java/com/example/service/TodoService.java        # 소유권 검증(findOwned), 정렬 화이트리스트(sanitizeSort)
+todo-backend/src/main/java/com/example/service/HtmlSanitizer.java      # Jsoup Safelist. addEnforcedAttribute로 rel/target 강제
+todo-backend/src/main/java/com/example/dto/PageResponse.java           # Page<E> → DTO 변환. of(page, mapper)
+todo-backend/src/main/java/com/example/dto/TodoCreateRequest.java
+todo-backend/src/main/java/com/example/dto/TodoUpdateRequest.java      # completed 없음(의도)
+todo-backend/src/main/java/com/example/dto/TodoToggleRequest.java      # completed는 래퍼 Boolean + @NotNull
+todo-backend/src/main/java/com/example/dto/TodoResponse.java           # user 정보 없음(의도)
+todo-backend/src/main/resources/db/seed-dev.sql                        # 계정1 + Todo 100건. 기능 확인용
+todo-backend/src/main/resources/db/seed-perf.sql                       # 같은 계정에 Todo 10000건. 성능 측정 전용
 
 todo-backend/src/main/resources/{application,application-local,application-prod}.yml
 todo-backend/src/test/java/com/example/TodoBackendApplicationTests.java    # contextLoads
 todo-backend/src/test/java/com/example/domain/UserRepositoryTest.java      # @DataJpaTest 5건
-todo-backend/src/test/java/com/example/domain/TodoRepositoryTest.java      # @DataJpaTest 8건
+todo-backend/src/test/java/com/example/domain/TodoRepositoryTest.java      # [P4 수정] 11건. search 테스트 3건이 Specification 방식으로 교체됨
 todo-backend/src/test/java/com/example/controller/AuthControllerTest.java  # [P3] @SpringBootTest + MockMvc 12건
+todo-backend/src/test/java/com/example/controller/TodoControllerTest.java  # [P4 신규] 21건. 14장 4~7번 + DoD 전용 케이스
+todo-backend/src/test/java/com/example/service/TodoServiceTest.java        # [P4 신규] 8건. 정렬 화이트리스트·소유권·PUT/toggle/delete·정화
 todo-backend/src/test/resources/application-test.yml                       # todolist_test, create-drop + [P3] jwt·app 픽스처
 
 todo-frontend/src/app/{layout.tsx,page.tsx,globals.css}              # create-next-app 기본값
@@ -116,19 +131,23 @@ todo-frontend/src/components/ui/button.tsx                           # shadcn �
 todo-frontend/src/lib/utils.ts                                       # cn()
 ```
 
-백엔드 테스트는 **총 26건**이다(`AuthControllerTest` 12 + `TodoRepositoryTest` 8 + `UserRepositoryTest` 5 + `contextLoads` 1).
-`AuthControllerTest`의 12건은 `CLAUDE.md` 14장이 말하는 **"통합 테스트 1~3번"을 `@Nested` 세 묶음으로 구현한 것**이다.
-"3건"은 시나리오 수이지 `@Test` 메서드 수가 아니므로, 12와 3이 어긋난 것이 아니다.
+백엔드 테스트는 **총 58건**이다(`AuthControllerTest` 12 + `TodoControllerTest` 21 + `TodoRepositoryTest` 11 +
+`TodoServiceTest` 8 + `UserRepositoryTest` 5 + `contextLoads` 1).
+`AuthControllerTest`의 12건은 14장 "통합 테스트 1~3번"(시나리오 3개)을, `TodoControllerTest`의 21건 중
+15건은 "통합 테스트 4~7번"(시나리오 4개)을 `@Nested` 묶음으로 구현한 것이다. **묶음 수(3, 4)가 시나리오 수이지
+`@Test` 메서드 수가 아니다.** `TodoControllerTest`의 나머지 6건(PUT/toggle 2·입력검증 3·N+1 1)은
+14장이 요구하지 않는 DoD 전용 추가 케이스다.
 
 `domain/`·`config/`·`controller/`·`service/`·`dto/`·`exception/`·`validation/`에 모두 클래스가 있다.
-**Phase 4 이후에 추가될 것은 `TodoController`·`TodoService`·`HtmlSanitizer`·`PageResponse`·Todo DTO 3종이다.**
+**Phase 4 로 이 목록이 완결됐다.** 다음 확장은 Phase 5(OAuth2)의 `CustomOAuth2UserService`·
+`OAuth2SuccessHandler`·`OAuth2FailureHandler`다.
 프론트의 `src/hooks/`, `src/types/`, `src/components/{common,todo}/`는 **아직 없다.**
 
 ⚠️ **`validation/` 패키지는 `CLAUDE.md` 2장 구조도에 없다.** 임의 추가가 아니라, 4장이 요구한
 `@MaxByteLength` 커스텀 validator를 둘 곳이 필요해 신설했다. 구조도는 예시이지 금지 목록이 아니며,
 검증 애노테이션을 `dto/`에 섞으면 DTO와 재사용 가능한 제약이 뒤엉킨다. **스펙 변경이 아니므로 `CLAUDE.md`를 고치지 않았다.**
 
-**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 6(프론트 스캐폴딩) 🟡. 다음은 Phase 4(Todo API).
+**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 4(Todo API) **✅ DoD 16항목 전수 통과(2026-09-01). 단 Swagger 확인은 `curl` 대체 검증** · 6(프론트 스캐폴딩) 🟡. 다음은 Phase 5(구글 OAuth2).
 
 ### 3.1 미해결 부채 — 착수 전 반드시 확인
 
@@ -140,19 +159,14 @@ todo-frontend/src/lib/utils.ts                                       # cn()
 | 4 | 프론트 미설치 | `motion`, `@tiptap/react`, `@tiptap/starter-kit`, `@tanstack/react-query`, `dompurify`, `date-fns`, `sonner` | Phase 6 |
 | 5 | 프론트 `.env.example` | 파일이 아직 없다 (무시 규칙은 준비됨) | Phase 6 |
 | 6 | Pretendard 폰트 | `src/app/fonts/` 없음 | Phase 6 |
-| 7 | **없는 URL이 404가 아니라 500** | `GlobalExceptionHandler`의 catch-all `Exception` 핸들러가 Spring의 `NoResourceFoundException`을 잡아 `INTERNAL_ERROR`(500)로 응답한다. 404여야 한다. **`ErrorCode` 6종에 쓸 값이 없어 보류 중이다** — `TODO_NOT_FOUND`는 메시지가 "할 일을 찾을 수 없습니다"라 API 경로 오류에 쓰면 어긋난다 | Phase 4 |
 
-> **부채 7 처리 절차** — 코드보다 **스펙을 먼저 고친다.** `CLAUDE.md` 11장 에러 표에 `NOT_FOUND`(404)를 추가하고
-> 버전을 올린 뒤, `ErrorCode`에 상수를 넣고 `GlobalExceptionHandler`에 `NoResourceFoundException` 핸들러를 붙인다.
-> Phase 3 종료 시점에 함께 처리하지 않은 이유는, **DoD 15항목 검증을 막 통과하고 태그 직전인 코드를 비-DoD 항목으로 흔들지 않기 위해서**다.
-> 스펙 변경이 필요한 사항이므로 착수 전 사용자 승인을 받는다.
-
-### 3.2 해소된 부채 (2026-08-28)
+### 3.2 해소된 부채 (2026-08-28 · 2026-09-01)
 
 | 항목 | 조치 |
 |---|---|
 | 루트 `.metadata/` 미무시 | 루트 `.gitignore`에 `.metadata/` 추가. 스테이징 대상이 **563개 → 21개**로 줄었다 |
 | 루트 `node_modules/` 미무시 | 재발 방지용으로 추가 |
+| **없는 URL·잘못된 메서드가 404·405가 아니라 500** | Phase 4 착수 전 실측으로 재현·확대 확인 후 사용자 승인 받아 해소(2026-09-01). `GlobalExceptionHandler`의 catch-all `Exception` 핸들러가 `NoResourceFoundException`과 `HttpRequestMethodNotSupportedException`을 함께 삼켜 둘 다 500 `INTERNAL_ERROR`로 나가고 있었다 — 원인이 하나인 두 증상이라 함께 처리했다. `CLAUDE.md` 11장에 `NOT_FOUND`(404)·`METHOD_NOT_ALLOWED`(405) 행 추가(v1.10), `ErrorCode`에 두 상수 추가, catch-all 위에 전용 핸들러 2개 추가. **미인증 상태에서는 재현되지 않는다** — Security 필터가 먼저 401로 막는다. 기존 26건 회귀 없음, 실기동 curl로 재현·수정 모두 확인 |
 | shrimp 태스크 상태 유입 | `shrimp_data/`를 루트 `.gitignore`에 추가 |
 | `.claude/commmands/` 오타 | `.claude/commands/`로 정정. `/git commit` 커맨드가 등록된다 |
 | shrimp `DATA_DIR` 오지정 | `.mcp.json`을 `D:\claude\todo-project\shrimp_data`로 변경 |
@@ -272,7 +286,7 @@ docs/PRD.md 3장 (ID 부여)
 
 ### 5.9 문서 수정 시
 
-`CLAUDE.md`(**v1.9**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.1**)는 상단에 **버전·최종 수정일**을 가진다.
+`CLAUDE.md`(**v1.10**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.2**)는 상단에 **버전·최종 수정일**을 가진다.
 내용을 고치면 **그 문서의 버전·수정일을 함께 올린다.** 세 문서의 버전은 서로 독립이며 일치할 필요가 없다.
 
 ⚠️ **이 줄의 버전 번호도 함께 고친다.** 대상 문서만 올리고 여기를 두면 규칙 문서가 거짓이 된다.
@@ -384,6 +398,14 @@ docs/PRD.md 3장 (ID 부여)
   `@SpringBootTest`만 경로가 그대로라 **둘이 갈린다는 점**이 함정이다.
 
 - **`application-test.yml`에 `jwt.secret`·`app.frontend-url`·`app.cors.allowed-origins`를 리터럴로 둔다.** Phase 3부터 `JwtTokenProvider`가 생성자에서, `SecurityConfig`가 필드에서 이 값을 읽어 `@SpringBootTest` 기동에 필수가 됐다(Phase 2까지 통과한 이유는 플레이스홀더를 읽는 빈이 없어 해석 자체가 일어나지 않아서다). **`DB_PASSWORD`는 실제 자격증명이므로 여기에 기본값을 심지 않는다.** 테스트 실행에는 환경변수 주입이 필요하다.
+
+### 6.8 Phase 4에서 확정된 규칙
+
+- **완료 필터·제목 검색 조합 조회는 JPQL `@Query`가 아니라 `Specification`을 쓴다.** `TodoRepository`는 처음 `@Query("... :completed IS NULL OR t.completed = :completed ... :keyword IS NULL OR LOWER(t.title) LIKE ...")` 형태로 만들었다가 폐기했다. PostgreSQL은 named parameter의 타입을 **그 SQL 텍스트가 처음 실행되는 시점의 문맥**으로 추론하는데, `keyword=null`이 최초 바인딩이면 문맥이 없어 `bytea`로 기본 처리돼 `lower(bytea)` 함수 없음 또는 `bytea→boolean` 캐스팅 불가 오류가 났다. `TodoRepositoryTest`(다른 값으로 먼저 실행해 타입이 캐시된 뒤라 우연히 통과)와 `TodoServiceTest`(별도 컨텍스트라 콜드 스타트, 실패)의 결과가 갈려 발견했다. **JPQL 안에서 `CAST(:param AS ...)`을 추가해도 소용없다** — pgjdbc가 파라미터를 바인딩하는 시점의 와이어 타입 자체가 문제라 SQL 안의 형변환으로는 고쳐지지 않는다. `domain/TodoSpecifications`(ownedBy·completedIs·titleContains)로 전환해 해결했다 — Criteria API는 메타모델에서 컬럼 타입을 미리 알고 명시적으로 바인딩하므로 이 문제 자체가 없다. 스택 추가 없이 `JpaSpecificationExecutor`(Spring Data JPA 기본 기능)만 썼다.
+- **동적 조회 관련 테스트는 반드시 콜드 스타트(단독 실행)로도 재확인한다.** 위 사례처럼 "다른 테스트가 먼저 실행돼 우연히 통과"하는 경우가 실재한다. `-Dtest=클래스명`으로 단독 실행했을 때도 통과해야 안전하다고 판단한다.
+- **정렬 화이트리스트는 서비스 진입부에서 처리하고 `Pageable`을 그대로 리포지토리에 넘기지 않는다.** `TodoService.sanitizeSort`가 `createdAt`·`dueDate` 밖의 정렬 프로퍼티를 걸러 `createdAt desc`로 대체한다. 컨트롤러에 두면 서비스를 직접 호출하는 테스트가 보호받지 못하고, 리포지토리에 그대로 넘기면 없는 프로퍼티로 500이 난다.
+- **HtmlSanitizer의 `rel`·`target` 강제는 `Safelist.addEnforcedAttribute`로 하고, 정화 후 재파싱하지 않는다.** `addAttributes`는 통과만 허용할 뿐 값을 채우지 않는다 — 사용자가 `rel="opener"`를 직접 넣으면 그대로 통과한다. `addEnforcedAttribute(tag, key, value)`로 정화 한 번에 값을 강제한다. 정화 후 HTML을 다시 파싱해 속성을 수동 주입하는 방식은 정화 보장이 흐려지고 `Document.OutputSettings.prettyPrint(false)`를 재적용하는 것을 놓치기 쉬워 쓰지 않는다.
+- **N+1 부재는 원리적 논증(LAZY 연관관계 + 응답 DTO에 필드 없음)이 아니라 Hibernate Statistics 실측으로 검증한다.** `EntityManagerFactory.unwrap(SessionFactory.class).getStatistics()`로 쿼리 실행 횟수를 잰다. **절대값이 아니라 항목 수 증가 전후의 차이를 비교한다** — `JwtAuthenticationFilter`가 매 요청마다 사용자 조회 쿼리 1건을 추가해 절대값이 매직 넘버가 되기 쉽다.
 
 ---
 
