@@ -1,6 +1,6 @@
 # Todo List 프로젝트 개발 가이드
 
-> **버전** 1.8 · **최종 수정** 2026-08-28
+> **버전** 1.9 · **최종 수정** 2026-09-01
 > 이 문서는 **기술 규칙의 단일 기준(Single Source of Truth)**이다.
 > 코드 생성 전 반드시 이 문서를 확인하고, 문서와 충돌하는 구현을 하지 않는다.
 > 문서에 없는 결정이 필요하면 임의로 진행하지 말고 먼저 질문한다.
@@ -157,7 +157,8 @@ AWS Amplify(프론트), EC2(백엔드), RDS(PostgreSQL) · Git/GitHub
 - **SpringDoc OpenAPI는 3.x를 쓴다.** `org.springdoc:springdoc-openapi-starter-webmvc-ui` 버전 3.x가 Spring Boot 4.x 대응이다. **2.8.x는 Spring Boot 3.x 전용이므로 쓰면 기동에 실패한다.**
   > ⚠️ **"3.x"로 두지 말고 정확한 버전을 `pom.xml`에 핀한다.** SpringDoc 3.x 안에서도 Boot 마이너 버전과 1:1로 대응한다(3.0.0→Boot 4.0.0, 3.0.3→4.0.5, 3.1.0→4.1.0). 범위로 두면 Boot 4.0.x에 3.1.0이 딸려 들어와 관리 버전이 어긋난다. **현재 `pom.xml`의 Boot 버전을 확인하고 대응하는 SpringDoc 버전을 명시적으로 적는다.**
 - **JWT 라이브러리는 jjwt 0.12.6으로 고정한다.** `pom.xml`에 세 아티팩트가 모두 필요하며, **`jjwt-impl`과 `jjwt-jackson`은 `<scope>runtime</scope>`이 의도된 설정이다.** 컴파일 시점에는 `jjwt-api`만 참조하고 구현체는 실행 시점에 주입되는 구조이므로, "왜 3개나 있지" 하고 정리하면 기동 시 `ClassNotFoundException`이 난다.
-  > ⚠️ **0.11.x → 0.12.x에서 API가 바뀌었다.** 인터넷 예제 다수가 구버전 문법(`Jwts.parser().setSigningKey(...)`, `SignatureAlgorithm.HS256`)이라 그대로 옮기면 컴파일에 실패한다. 0.12에서는 `Jwts.parser().verifyWith(key).build()` · `Jwts.builder().signWith(key)` 형태다. 버전을 올리거나 내리지 않는다.
+  > ⚠️ **0.11.x → 0.12.x에서 API가 바뀌었다.** 인터넷 예제 다수가 구버전 문법(`Jwts.parser().setSigningKey(...)`, `SignatureAlgorithm.HS256`)인데, **이 API들은 0.12.6에도 deprecated 상태로 남아 있어 컴파일은 통과한다.** 즉 잘못 옮겨도 오류로 걸러지지 않고 경고만 나고 지나간다 — Jackson 항목과 같은 실패 양상이다. (2026-09-01 `jjwt-api-0.12.6.jar`를 `javap`로 열어 `setSigningKey(byte[]/String/Key)`와 `SignatureAlgorithm` 클래스가 모두 존재함을 확인했다.) 0.12 문법은 `Jwts.parser().verifyWith(key).build()` · `Jwts.builder().signWith(key, Jwts.SIG.HS256)` 형태다. 버전을 올리거나 내리지 않는다.
+  > ⚠️ **`signWith`에 알고리즘을 반드시 넘긴다.** 인자 없는 `signWith(key)`를 쓰면 jjwt가 **키 길이로 알고리즘을 추론**한다(32~47B→HS256, 48~63B→HS384, 64B+→HS512). 그러면 12장의 "HS256으로 고정한다"가 코드가 아니라 **`JWT_SECRET`의 길이에 좌우되어**, 로컬과 운영의 시크릿 길이가 다르면 알고리즘이 갈린다. Phase 3 DoD 검증에서 49바이트 시크릿이 실제로 `alg=HS384`를 발급해 발견한 사례다. 알고리즘 상수는 0.11의 `SignatureAlgorithm`이 아니라 **0.12의 `Jwts.SIG`**를 쓴다.
 - **애니메이션 패키지는 `motion`이다.** `framer-motion`은 이름이 바뀌기 전의 deprecated 별칭이다. `npm install motion`으로 설치하고 **import는 반드시 `motion/react`에서 한다.** API는 동일하다.
 - **shadcn/ui는 React 19 + Tailwind 4를 정식 지원한다.** 단 npm으로 설치할 때 peer dependency 충돌이 나므로 **`--legacy-peer-deps` 플래그를 쓴다.** (pnpm·yarn·bun은 플래그 불필요) 또한 toast 컴포넌트는 deprecated이므로 **sonner**를 쓰고, 신규 프로젝트 스타일은 **new-york**을 쓴다.
 - **폼 라이브러리를 도입하지 않는다.** `react-hook-form`·`zod`·`@hookform/resolvers`를 설치하지 않는다. 이 앱의 폼은 셋뿐이고(`/login` 2필드, `/signup` 3필드, `TodoForm` 4필드) 검증 규칙도 4장 제약 표로 고정되어 있어, `useState` + 수동 검증으로 충분하다. 스택을 늘리지 않는 편이 MVP에 맞다.
