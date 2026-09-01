@@ -1,6 +1,6 @@
 # Todo List 프로젝트 개발 가이드
 
-> **버전** 1.9 · **최종 수정** 2026-09-01
+> **버전** 1.10 · **최종 수정** 2026-09-01
 > 이 문서는 **기술 규칙의 단일 기준(Single Source of Truth)**이다.
 > 코드 생성 전 반드시 이 문서를 확인하고, 문서와 충돌하는 구현을 하지 않는다.
 > 문서에 없는 결정이 필요하면 임의로 진행하지 말고 먼저 질문한다.
@@ -827,9 +827,26 @@ onSettled: () => {
 | 유효성 검증 실패 | 400 | `INVALID_INPUT` |
 | 인증 실패 / 토큰 만료 | 401 | `UNAUTHORIZED` |
 | 권한 없음 | 403 | `FORBIDDEN` |
-| 리소스 없음 / 소유자 불일치 | 404 | `TODO_NOT_FOUND` |
+| Todo 없음 / 소유자 불일치 | 404 | `TODO_NOT_FOUND` |
+| **API 경로 없음** | 404 | **`NOT_FOUND`** |
+| **지원하지 않는 HTTP 메서드** | 405 | **`METHOD_NOT_ALLOWED`** |
 | 이메일 중복 (회원가입) | 409 | `EMAIL_DUPLICATED` |
 | 서버 오류 | 500 | `INTERNAL_ERROR` |
+
+> ⚠️ **`NOT_FOUND`와 `TODO_NOT_FOUND`를 겸용하지 않는다.** 둘 다 404지만 메시지가 다르다.
+> `TODO_NOT_FOUND`는 "할 일을 찾을 수 없습니다"라 API 경로 오류에 쓰면 문구가 어긋난다.
+>
+> ⚠️ **아래 둘은 `@RestControllerAdvice`의 catch-all이 삼켜 500으로 나가던 것이다** (2026-09-01 실측으로 확인).
+> 원인이 하나이므로 함께 처리한다 — `@ExceptionHandler(Exception.class)`가 Spring MVC 표준 예외를
+> 종류를 가리지 않고 잡는다. **catch-all 위에 구체적인 핸들러를 두어야** 아래로 흘러가지 않는다.
+>
+> | 요청 | 던져지는 예외 |
+> |---|---|
+> | 없는 경로 | `org.springframework.web.servlet.resource.NoResourceFoundException` |
+> | 잘못된 메서드 | `org.springframework.web.HttpRequestMethodNotSupportedException` |
+>
+> ⚠️ **미인증 요청에서는 재현되지 않는다.** Security 필터가 먼저 401로 막아 컨트롤러까지 가지 않는다.
+> **로그인한 사용자에게만 보이는 결함**이므로 인증 토큰을 넣고 확인해야 한다.
 
 - **OAuth 계정 충돌은 이 표에 없다.** REST 응답이 아니라 `?error=email_conflict` 쿼리를 붙인 302 리다이렉트로 처리하므로 에러 코드를 쓰지 않는다.
 - 검증 실패 시 필드별 메시지 포함

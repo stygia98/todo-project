@@ -1,6 +1,6 @@
 # ROADMAP — Todo List 프로젝트
 
-> **버전** 2.1 · **최종 수정** 2026-09-01
+> **버전** 2.2 · **최종 수정** 2026-09-01
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -15,7 +15,7 @@
 | 1 | 백엔드 스캐폴딩 | backend | ✅ |
 | 2 | 도메인 & DB | backend | ✅ |
 | 3 | 인증 (로컬) + 인증 테스트 | backend | ✅ |
-| 4 | Todo API + Todo 테스트 | backend | ⬜ |
+| 4 | Todo API + Todo 테스트 | backend | ✅ |
 | 5 | 구글 OAuth2 + OAuth 테스트 | backend | ⬜ |
 | 6 | 프론트 스캐폴딩 | frontend | 🟡 |
 | 7 | 인증 화면 | frontend | ⬜ |
@@ -340,23 +340,83 @@
 - **통합 테스트 4~7번 작성**
 
 **DoD**
-- [ ] 목록 API가 `{success, data:{content, page, ...}, error}` 형태로 응답
-- [ ] `PUT` 저장이 완료 상태를 덮어쓰지 않음
-- [ ] `toggle`을 같은 값으로 두 번 호출해도 결과가 동일함(멱등)
-- [ ] `completed` 미지정 시 전체 반환, `true`/`false` 시 필터 적용
-- [ ] 영문 대소문자를 섞어 검색해도 결과가 나옴
-- [ ] `?sort=foo,desc` 같은 잘못된 정렬 값에도 500이 나지 않음
-- [ ] 삭제 시 `deleted_at` 기록, 목록에서 제외
-- [ ] 타 사용자 Todo 접근 시 404
-- [ ] 제목 미입력·200자 초과 시 400 + 필드 메시지
-- [ ] 본문 50,000자 초과 시 400
-- [ ] `<script>` 포함 본문 저장 시 태그 제거, `a` 태그에 `rel` 주입 확인
-- [ ] **키워드 검색 포함** 목록 조회가 **워밍업 후 3회 측정 중앙값 500ms 이내** (로컬, 시드 **10,000건** 기준)
+- [x] 목록 API가 `{success, data:{content, page, ...}, error}` 형태로 응답
+- [x] `PUT` 저장이 완료 상태를 덮어쓰지 않음
+- [x] `toggle`을 같은 값으로 두 번 호출해도 결과가 동일함(멱등)
+- [x] `completed` 미지정 시 전체 반환, `true`/`false` 시 필터 적용
+- [x] 영문 대소문자를 섞어 검색해도 결과가 나옴
+- [x] `?sort=foo,desc` 같은 잘못된 정렬 값에도 500이 나지 않음
+- [x] 삭제 시 `deleted_at` 기록, 목록에서 제외
+- [x] 타 사용자 Todo 접근 시 404
+- [x] 제목 미입력·200자 초과 시 400 + 필드 메시지
+- [x] 본문 50,000자 초과 시 400
+- [x] `<script>` 포함 본문 저장 시 태그 제거, `a` 태그에 `rel` 주입 확인
+- [x] **키워드 검색 포함** 목록 조회가 **워밍업 후 3회 측정 중앙값 500ms 이내** (로컬, 시드 **10,000건** 기준)
   > ⚠️ 시드 100건으로는 이 지표가 의미가 없다. 인덱스가 없어도 100행은 1ms 미만이라 **항상 통과한다.** `CLAUDE.md` 4장이 지목한 유일한 성능 위험(`LOWER(title) LIKE '%키워드%'`의 인덱스 미사용)을 검출하려면 데이터가 충분해야 하고, 측정 대상도 검색 경로여야 한다. 또 첫 요청은 JVM 콜드 스타트라 DB가 아니라 워밍업 상태를 재는 셈이 되므로 워밍업 후에 측정한다.
-- [ ] 날짜가 배열이 아닌 ISO 문자열로 직렬화됨
-- [ ] 목록 조회 시 user 조회 쿼리가 추가로 발생하지 않음
-- [ ] Swagger에서 전체 API 확인 가능
-- [ ] **Todo 통합 테스트 4건 통과**
+- [x] 날짜가 배열이 아닌 ISO 문자열로 직렬화됨
+- [x] 목록 조회 시 user 조회 쿼리가 추가로 발생하지 않음
+- [x] Swagger에서 전체 API 확인 가능 — ⚠️ **Authorize 버튼은 브라우저로 직접 누르지 않았다. `curl` 대체 검증**(아래 기록 참조)
+- [x] **Todo 통합 테스트 4건 통과**
+
+> **검증 기록 (2026-09-01)** — 16항목 전부 통과. 근거는 이번 검증 세션의 실제 명령 출력이다.
+>
+> 판정 경로는 둘이다. **테스트 경로**는 `DB_PASSWORD` 주입 후 `./mvnw clean test`(**exit 0**, `Tests run: 58`:
+> `AuthControllerTest` 12 + `TodoControllerTest` 21 + `TodoRepositoryTest` 11 + `TodoServiceTest` 8 +
+> `UserRepositoryTest` 5 + `contextLoads` 1)이고, **기동 경로**는 환경변수 5종을 주입한
+> `./mvnw spring-boot:run` + `curl`이다. 8080을 무관한 타 프로젝트가 점유 중이라 종료하지 않고
+> `SERVER_PORT=8081`로 우회했다(Phase 3와 동일).
+>
+> | DoD | 근거 |
+> |---|---|
+> | 목록 API 포맷 | `curl`로 시드 계정 목록 조회 → `dataKeys: [content,first,last,page,size,totalElements,totalPages]` |
+> | PUT이 completed 유지 | `TodoControllerTest.putDoesNotOverwriteCompleted` |
+> | toggle 멱등 | `TodoControllerTest.toggleIsIdempotent` |
+> | completed 필터 | `TodoControllerTest` 목록 묶음 3건(미지정/true/false) |
+> | 대소문자 무시 검색 | `TodoControllerTest.keywordSearchIsCaseInsensitive` |
+> | 잘못된 sort 값 | `TodoControllerTest.invalidSortDoesNotCause500` |
+> | Soft Delete | `TodoControllerTest` 5번 묶음 2건 + `psql`로 물리 행 잔존 확인 |
+> | 타 사용자 404 | `TodoControllerTest` 6번 묶음 3건(GET·PUT·DELETE 전부) |
+> | 제목 검증 | `TodoControllerTest` 입력검증 묶음(미입력·200자 초과) |
+> | 본문 검증 | 〃 (50,000자 초과) |
+> | XSS 정화 + rel 주입 | `TodoControllerTest` 7번 묶음 4건(script 제거·rel/target 강제·pre 줄바꿈 보존·javascript: 스킴 제거) |
+> | 성능 500ms | 아래 별도 기록 |
+> | 날짜 ISO 직렬화 | `curl`: `createdAt="2026-08-31T22:43:08.114254Z"`, `dueDate="2026-08-03"` |
+> | user 추가 쿼리 없음(N+1) | `TodoControllerTest.queryCountDoesNotScaleWithItemCount` — Hibernate Statistics로 항목 3→6개 시 쿼리 수 불변 실측 |
+> | Swagger 전체 API | `/swagger-ui/index.html` → 200. `/v3/api-docs`에 `/api/v1/todos`(get,post)·`/api/v1/todos/{id}`(get,put,delete)·`/api/v1/todos/{id}/toggle`(patch) 6개 메서드 전부 등록 확인 |
+> | Todo 통합 테스트 4건 | `TodoControllerTest`가 14장 4~7번(시나리오 4개)을 `@Nested` 네 묶음으로 구현. 시나리오당 `@Test`는 4번 6건·5번 2건·6번 3건·7번 4건으로 총 15건이며, DoD 판정용 추가 케이스(PUT/toggle 2·입력검증 3·N+1 1) 6건을 더해 클래스 전체는 21건이다. "4건"은 시나리오 수이지 메서드 수가 아니다(Phase 3의 "인증 통합 테스트 3건"과 같은 표기 관례) |
+>
+> #### Swagger를 브라우저로 검증하지 않았다
+>
+> Authorize 버튼을 실제로 누르지 않았다. `/v3/api-docs`에서 세 경로 모두 `security:[{"bearerAuth":[]}]`가
+> 걸려 있음과, 발급 토큰을 `Authorization: Bearer`로 넣은 실제 API 호출이 성공함을 대체 근거로 삼았다
+> (Phase 3와 동일한 방식).
+>
+> #### 성능 측정 상세
+>
+> ```
+> 데이터: todolist_db.todos = 10,100건 (seed-perf 10,000 + seed-dev 100, 태스크 19 산출물)
+> 검색어: "회의"(2,020건 매칭) — URL-encode로 전송해 셸 UTF-8 인코딩 문제를 피했다
+>
+> 워밍업: 60.4ms (측정 제외)
+> 측정 1: 55.651ms
+> 측정 2: 55.949ms
+> 측정 3: 56.818ms
+> 중앙값: 55.949ms   ← 500ms 기준의 약 11%
+> ```
+>
+> 기준 대비 여유가 커 `EXPLAIN ANALYZE`는 불필요했다(초과 시에만 요구되는 절차). 이 여유가
+> "인덱스가 필요 없다"는 뜻은 아니다 — 10,100건은 로컬 PostgreSQL이 캐시하기에 충분히 작은 크기이며,
+> 데이터가 수십만 건으로 커지면 같은 `LIKE` 패턴이 다시 문제가 될 수 있다(`CLAUDE.md` 4장이 위임한
+> 미래의 `pg_trgm` 검토 대상).
+>
+> #### 검증 중 발견한 스펙 위반
+>
+> 없음. Phase 3의 HS256 건과 같은 신규 발견은 이번 검증에서 없었다.
+>
+> #### 정리
+>
+> 기동 프로세스 종료 후 8081 포트 해제를 재확인했다(종료 직후 첫 확인에서 `LISTENING`으로 남아 있어
+> 1초 후 재조회 — 타이밍 문제였을 뿐 실제 잔존은 아니었다).
 
 ---
 
