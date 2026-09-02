@@ -1,6 +1,6 @@
 # ROADMAP — Todo List 프로젝트
 
-> **버전** 2.3 · **최종 수정** 2026-09-02
+> **버전** 2.4 · **최종 수정** 2026-09-02
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -17,7 +17,7 @@
 | 3 | 인증 (로컬) + 인증 테스트 | backend | ✅ |
 | 4 | Todo API + Todo 테스트 | backend | ✅ |
 | 5 | 구글 OAuth2 + OAuth 테스트 | backend | ✅ |
-| 6 | 프론트 스캐폴딩 | frontend | 🟡 |
+| 6 | 프론트 스캐폴딩 | frontend | ✅ |
 | 7 | 인증 화면 | frontend | ⬜ |
 | 8 | Todo 화면 | frontend | ⬜ |
 | 9 | 인터랙션 다듬기 | frontend | ⬜ |
@@ -516,21 +516,55 @@
 - **`public/static` 경로를 만들지 않는다** (Amplify 예약 경로)
 
 **DoD**
-- [ ] **`package.json`의 `next`와 `eslint-config-next`가 모두 15.x임 (16 아님)** — 둘 중 하나만 확인하면 놓친다
-- [ ] **소스가 `src/` 아래에 있음** (`src/app/`, `src/components/`, `src/lib/`, `src/types/`)
-- [ ] **`package.json`에 `@tiptap/extension-link`가 없음** (v3 StarterKit 내장)
-- [ ] Node 20 이상에서 빌드됨
-- [ ] `npm run build` 성공, 출력 디렉토리가 `.next`
-- [ ] `package.json`에 `motion`이 있고 `framer-motion`이 없음
-- [ ] 디자인 토큰이 OS 다크 설정에 따라 전환됨 (`class` 조작 없이 CSS만으로)
-- [ ] 페이지 `page.tsx`에 `"use client"`가 붙어 있음
-- [ ] **`components.json`의 `style`이 `new-york`임** (현재 `radix-nova`)
-- [ ] **`globals.css`에 `.dark` 클래스 셀렉터나 `@custom-variant dark (&:is(.dark *))`가 없고, 다크 토큰이 `@media (prefers-color-scheme: dark)` 안에 정의되어 있음** (현재 shadcn 기본값이 `class` 전략이라 반드시 걷어내야 한다)
-- [ ] 디자인 토큰 값이 `CLAUDE.md` 8장 팔레트와 일치함 (배경 `#FAFAFA`/`#0A0A0A`, 액센트 `#4F46E5`, 우선순위 3색) — shadcn 기본 neutral이 남아 있지 않음
-- [ ] Pagination 컴포넌트 단독 동작 확인 (더미 데이터). **페이지 수 1 이하일 때 아무것도 렌더하지 않음**
-- [ ] `ErrorState`가 재시도 버튼과 함께 렌더되고, 버튼 클릭이 `onRetry`를 호출함
-- [ ] `apiClient`가 `data` 언래핑과 401 처리를 수행함
-- [ ] **`apiClient`가 던진 에러를 `lib/errorMessages.ts`에 넣으면 `PRD.md` 5.1 표의 문구가 그대로 나옴** (네트워크 실패 케이스 포함 — 서버를 내리고 확인)
+- [x] **`package.json`의 `next`와 `eslint-config-next`가 모두 15.x임 (16 아님)** — 둘 중 하나만 확인하면 놓친다
+- [x] **소스가 `src/` 아래에 있음** (`src/app/`, `src/components/`, `src/lib/`, `src/types/`)
+- [x] **`package.json`에 `@tiptap/extension-link`가 없음** (v3 StarterKit 내장)
+- [x] Node 20 이상에서 빌드됨
+- [x] `npm run build` 성공, 출력 디렉토리가 `.next`
+- [x] `package.json`에 `motion`이 있고 `framer-motion`이 없음
+- [x] 디자인 토큰이 OS 다크 설정에 따라 전환됨 (`class` 조작 없이 CSS만으로)
+- [ ] ~~페이지 `page.tsx`에 `"use client"`가 붙어 있음~~ **N/A** — 아래 검증 기록 참조
+- [x] **`components.json`의 `style`이 `new-york`임** (현재 `radix-nova`)
+- [x] **`globals.css`에 `.dark` 클래스 셀렉터나 `@custom-variant dark (&:is(.dark *))`가 없고, 다크 토큰이 `@media (prefers-color-scheme: dark)` 안에 정의되어 있음** (현재 shadcn 기본값이 `class` 전략이라 반드시 걷어내야 한다)
+- [x] 디자인 토큰 값이 `CLAUDE.md` 8장 팔레트와 일치함 (배경 `#FAFAFA`/`#0A0A0A`, 액센트 `#4F46E5`, 우선순위 3색) — shadcn 기본 neutral이 남아 있지 않음
+- [x] Pagination 컴포넌트 단독 동작 확인 (더미 데이터). **페이지 수 1 이하일 때 아무것도 렌더하지 않음**
+- [x] `ErrorState`가 재시도 버튼과 함께 렌더되고, 버튼 클릭이 `onRetry`를 호출함
+- [x] `apiClient`가 `data` 언래핑과 401 처리를 수행함
+- [x] **`apiClient`가 던진 에러를 `lib/errorMessages.ts`에 넣으면 `PRD.md` 5.1 표의 문구가 그대로 나옴** (네트워크 실패 케이스 포함 — 서버를 내리고 확인)
+
+> **검증 기록 (2026-09-02)** — 15항목 중 14항목 통과, 1항목(`"use client"`)은 검증 대상 부재로 **N/A** 처리(사용자 확인 완료). 근거는 이번 검증 세션의 실제 명령 출력과 브라우저 실측이다.
+>
+> 판정 경로는 둘이다. **정적 경로**는 `package.json`·`components.json`·`globals.css`를 직접 읽거나 `grep`한 결과와, `rm -rf .next && npm run build`(**exit 0**, 정적 페이지 생성 성공)다. **브라우저 경로**는 `npm run dev` 기동 후 `src/app/dod-verify`(임시 데모 라우트, 사용자 확인 후 존치)에 공용 컴포넌트와 `apiClient`/`errorMessages` 인터랙션을 배치해 `claude-in-chrome`으로 클릭·DOM·CSSOM을 직접 확인했다.
+>
+> | DoD | 근거 |
+> |---|---|
+> | next·eslint-config-next 15.x | `package.json`: 둘 다 `15.5.24` |
+> | src/ 아래 소스 | `app`·`components`·`lib`·`types`가 프로젝트 루트가 아니라 `src/` 아래에만 존재(루트 검색 결과 없음) |
+> | `@tiptap/extension-link` 없음 | `package.json` grep 결과 없음(단 `@tiptap/starter-kit`의 전이 의존성으로 `node_modules`엔 존재 — 직접 의존성이 아니므로 규칙 위반 아님) |
+> | Node 20 이상 | `node -v` → `v24.18.0` |
+> | build 성공 + `.next` | `rm -rf .next && npm run build` exit 0, `.next` 디렉터리 생성 확인 |
+> | `motion` 있음, `framer-motion` 없음 | `package.json`에 `motion` 직접 의존성, `framer-motion` 직접 의존성 없음(`motion` 패키지의 전이 의존성으로만 존재) |
+> | 다크 토큰 OS 전환(CSS만) | `document.styleSheets`를 순회해 `@media (prefers-color-scheme: dark)` 규칙이 실제로 파싱돼 있음을 CSSOM에서 확인. **이 환경에는 OS `prefers-color-scheme`을 강제 전환하는 도구가 없어 실제 다크 렌더 육안 확인은 하지 못했다**(Phase 6 착수 시점부터의 알려진 제약) |
+> | `page.tsx`에 `"use client"` | **N/A.** 현재 유일한 `page.tsx`는 create-next-app 기본 홈(`/`)이며 `CLAUDE.md` 7장 화면 목록에 없는, 최종 스펙에 존재하지 않는 라우트다. `CLAUDE.md` 9장이 지목하는 6개 라우트(`/login`·`/signup`·`/todos` 등)는 전부 Phase 7·8에서 만들어진다 — 이번 Phase엔 검증 대상 자체가 없다. 사용자 확인 후 N/A로 기록했다. **Phase 7 착수 시 이 DoD가 다시 적용된다.** |
+> | `components.json` style | `"style": "new-york"` |
+> | `globals.css` 다크 전략 | `.dark`·`@custom-variant dark` 없음(grep 결과 없음), `@media (prefers-color-scheme: dark)` 존재 |
+> | 팔레트 값 일치 | `globals.css`에서 배경 `#FAFAFA`/`#0A0A0A`, 카드 `#FFFFFF`/`#171717`, 텍스트 `#171717`/`#FAFAFA`, 보조 `#737373`, 액센트 `#4F46E5`, 우선순위 `#EF4444`/`#F59E0B`/`#10B981` 전부 확인 |
+> | Pagination totalPages=1 → 렌더 없음 | `dod-verify`에서 `totalPages=1`로 렌더한 컨테이너의 `children.length === 0`을 DOM에서 직접 확인 |
+> | ErrorState 재시도 버튼 | `find`로 버튼을 찾아 클릭 → 카운터가 `0회`에서 `1회`로 증가(`onRetry` 실제 호출 확인) |
+> | apiClient 언래핑 + 401 | mock 성공 응답에서 `apiFetch`가 `data`만 반환, mock 401 응답에서 `ApiRequestError(code=UNAUTHORIZED)`를 던지고 `localStorage` 토큰이 실제로 삭제됨을 확인 |
+> | errorMessages 매핑(네트워크 실패 포함) | `.env.local`에 도달 불가능한 포트(`localhost:59999`)를 임시로 설정해 **진짜 네트워크 실패**(mock 아님)를 발생시키고, `getErrorMessage(e)`가 `PRD.md` 5.1 표 그대로 `"연결에 실패했습니다."`를 반환함을 확인. 검증 후 `.env.local` 삭제 |
+>
+> #### DoD 소제목 "14항목" 관련
+>
+> 이 절의 소제목은 처음부터 "DoD"이며 ROADMAP.md 어디에도 "14항목"이라는 문구는 없었다. 태스크 계획 단계에서 체크박스 개수를 잘못 세어(14개로) 기록해 둔 것이 원인이며, 문서 자체에는 정정할 오탈자가 없다.
+>
+> #### 검증 중 발견한 스펙 위반
+>
+> 없음.
+>
+> #### 정리
+>
+> 검증에 쓴 `src/app/dod-verify` 임시 데모 라우트는 삭제하지 않고 존치하기로 사용자와 합의했다(Phase 7~9 컴포넌트 개발 시 재사용 가능). 검증용 `.env.local`은 삭제했다. dev 서버는 taskkill로 완전히 종료하고 포트 해제를 재확인했다.
 
 > 버전·설치 방법은 `CLAUDE.md` 3장에서 모두 확정됐다. 이 Phase에서 재조사하지 않는다.
 
