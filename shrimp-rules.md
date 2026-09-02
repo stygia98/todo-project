@@ -52,19 +52,19 @@
 
 | 저장소 | 브랜치 | 커밋 | 원격 | 비고 |
 |---|---|---|---|---|
-| `todo-project` | `main` (`ce61298`) · `develop` (`dae9256`) | main 14 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`. `docs/ROADMAP.md`·`shrimp-rules.md` 미커밋(이번 Phase 6 문서 동기화 작업분) |
+| `todo-project` | `main` (`431f861`) · `develop` (`1022673`) | main 17 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`. `docs/ROADMAP.md`·`shrimp-rules.md` 미커밋(이번 Phase 7 문서 동기화 작업분) |
 | `todo-backend` | `main` (`6f7aca6`) · `develop` (`de9b0f7`) | main 19 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`~`v0.5.0`. 미커밋 변경 없음(clean) |
-| `todo-frontend` | `main` (+ `develop`, 동일 해시 `c62d5b6`) | 1 | `origin` 푸시 완료 | 태그 `v0.0.0`. Phase 6 작업분 미커밋(아래 참조) |
+| `todo-frontend` | `main` (`1ab4ae6`) · `develop` (`eb14323`) | main 4 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`·`v0.6.0`. Phase 7 작업분 미커밋(아래 참조) |
 
 **세 저장소 모두 `develop` 분기 + `origin` 푸시 완료이며, `master`는 없다.**
-태그는 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.5.0`은 `6f7aca6`(= `todo-backend main`)를 가리킨다.
+태그는 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.5.0`은 `6f7aca6`(= `todo-backend main`), `v0.6.0`은 `1ab4ae6`(= `todo-frontend main`)를 가리킨다.
 `main`이 `develop`보다 병합 커밋 하나만큼 앞선 구조는 Phase 1에서 확립된 패턴이며 오류가 아니다.
 
-⚠️ **`todo-frontend`의 Phase 6 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
-`main` 브랜치 작업 트리에 **수정 6 + 신규 다수**로 존재한다(패키지 7종 설치, shadcn style 전환,
-디자인 토큰·다크모드 전환, `lib/` 4종 + `queryKeys`, `src/types/` 3개, 공용 컴포넌트 4종 + `ui/skeleton`,
-`Providers`·`QueryProvider`·`Header`, `layout.tsx` 폰트 교체, `.env.example`, 검증용 `dod-verify` 데모 페이지).
-커밋·병합·태그 `v0.6.0`은 사용자 승인 후 별도 태스크에서 수행한다. 아래 소스 목록은 **작업 트리 기준**이다.
+⚠️ **`todo-frontend`의 Phase 7 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
+`main` 브랜치 작업 트리에 **신규 다수**로 존재한다(`authService.ts`, `hooks/useAuth.ts`,
+`app/(auth)/login`·`app/(auth)/signup`, `app/(main)/layout.tsx`·`app/(main)/todos`, `app/oauth/callback`,
+`components/ui/input.tsx`·`label.tsx`). 커밋·병합·태그 `v0.7.0`은 사용자 승인 후 별도 태스크에서 수행한다.
+아래 소스 목록은 **작업 트리 기준**이다.
 
 원격은 `git@github.com:stygia98/{todo-project,todo-backend,todo-frontend}.git`이다(언더스코어 이름은 301 리다이렉트로만 남아 있다).
 
@@ -155,6 +155,16 @@ todo-frontend/src/lib/queryKeys.ts                                   # [P6 신�
 todo-frontend/src/types/api.ts                                       # [P6 신규] ApiResponse, ApiError, PageResponse
 todo-frontend/src/types/user.ts                                      # [P6 신규] UserResponse(id/email/nickname만), TokenResponse(필드명 token)
 todo-frontend/src/types/todo.ts                                      # [P6 신규] Priority, TodoResponse, TodoCreateRequest, TodoUpdateRequest(completed 없음), TodoToggleRequest
+
+todo-frontend/src/lib/authService.ts                                 # [P7 신규] login→POST /auth/login, signup→POST /auth/signup(계획서 지침의 엔드포인트가 서로 뒤바뀐 오타를 실소스 대조로 정정)
+todo-frontend/src/hooks/useAuth.ts                                   # [P7 신규] isExpired(exp 디코드)로 게이팅한 /auth/me 조회 + login/logout. Context 없이 authMeKey 캐시를 그대로 전역 상태로 씀
+todo-frontend/src/components/ui/input.tsx                            # [P7 신규] shadcn 추가(react-hook-form 등 딸려오지 않음 확인)
+todo-frontend/src/components/ui/label.tsx                            # [P7 신규] shadcn 추가. 기존 설치된 radix-ui 패키지의 Label 프리미티브 사용
+todo-frontend/src/app/(main)/layout.tsx                               # [P7 신규] 라우트 보호 전담. isPending/isAuthenticated/user/logout을 useAuth에서 받아 Skeleton→null(리다이렉트)→Header+children 순으로 렌더
+todo-frontend/src/app/(main)/todos/page.tsx                           # [P7 신규] 라우트 보호 검증용 플레이스홀더. 실제 목록 UI는 Phase 8
+todo-frontend/src/app/(auth)/login/page.tsx                           # [P7 신규] useSearchParams(?error=email_conflict)를 Suspense로 감쌈. submitLogin을 폼 제출·재시도 버튼이 공유
+todo-frontend/src/app/(auth)/signup/page.tsx                          # [P7 신규] touched는 blur가 아니라 onChange 최초 호출에서 true — 타이핑 중 실시간 검증
+todo-frontend/src/app/oauth/callback/page.tsx                         # [P7 신규] (auth) 그룹이 아니라 oauth/ 최상위(CLAUDE.md 2장 구조도). hasHandledRef로 중복 처리 가드
 ```
 
 백엔드 테스트는 **총 63건**이다(`AuthControllerTest` 12 + `TodoControllerTest` 21 + `TodoRepositoryTest` 11 +
@@ -169,14 +179,14 @@ todo-frontend/src/types/todo.ts                                      # [P6 신�
 **Phase 5 로 백엔드 구현 목록이 완결됐다.**
 
 프론트는 **Phase 6 으로 스캐폴딩 목록이 완결됐다.** `src/types/`·`src/lib/`·`src/components/{ui,common,providers}/`가
-모두 채워졌다. `src/hooks/`와 `src/components/todo/`는 **아직 없다** — `useAuth`·`useTodos` 등 실제 화면 로직은
-Phase 7·8의 몫이다.
+모두 채워졌다. Phase 7에서 `src/hooks/`(`useAuth`)가 신설됐다. `src/components/todo/`와 `useTodos`는 **아직 없다** —
+Phase 8의 몫이다.
 
 ⚠️ **`validation/` 패키지는 `CLAUDE.md` 2장 구조도에 없다.** 임의 추가가 아니라, 4장이 요구한
 `@MaxByteLength` 커스텀 validator를 둘 곳이 필요해 신설했다. 구조도는 예시이지 금지 목록이 아니며,
 검증 애노테이션을 `dto/`에 섞으면 DTO와 재사용 가능한 제약이 뒤엉킨다. **스펙 변경이 아니므로 `CLAUDE.md`를 고치지 않았다.**
 
-**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 4(Todo API) **✅ DoD 16항목 전수 통과(2026-09-01). 단 Swagger 확인은 `curl` 대체 검증** · 5(구글 OAuth2) **✅ DoD 5항목 전수 통과(2026-09-02). 라이브 브라우저 검증. 병합·태그 `v0.5.0` 완료** · 6(프론트 스캐폴딩) **✅ DoD 15항목 중 14항목 전수 통과, 1항목(`"use client"`) N/A(2026-09-02)**. 다음은 Phase 6 커밋·병합·태그(사용자 승인 대기) 후 Phase 7(인증 화면).
+**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 4(Todo API) **✅ DoD 16항목 전수 통과(2026-09-01). 단 Swagger 확인은 `curl` 대체 검증** · 5(구글 OAuth2) **✅ DoD 5항목 전수 통과(2026-09-02). 라이브 브라우저 검증. 병합·태그 `v0.5.0` 완료** · 6(프론트 스캐폴딩) **✅ DoD 15항목 중 14항목 전수 통과, 1항목(`"use client"`) N/A(2026-09-02). 병합·태그 `v0.6.0` 완료** · 7(인증 화면) **✅ DoD 17항목(계획상 "16항목") 전수 통과(2026-09-02). 구글 로그인은 JWT 직접 주입으로 검증(백엔드 리다이렉트는 Phase 5에서 라이브 검증됨)**. 다음은 Phase 7 커밋·병합·태그(사용자 승인 대기) 후 Phase 8(Todo 화면).
 
 ### 3.1 미해결 부채 — 착수 전 반드시 확인
 
@@ -199,7 +209,8 @@ Phase 6 완료로 이전에 있던 6항목이 전부 해소됐다(3.2 참조). �
 | Phase 0 전체 | ✅ **완료.** 첫 커밋 → `develop` 분기 → `main`·`develop` 푸시 → 태그 `v0.0.0`. ROADMAP Phase 0 **DoD 9항목 전부 통과** |
 | 저장소 이름 | GitHub 3개 모두 `todo-` 하이픈으로 통일(`todo-project`/`todo-backend`/`todo-frontend`). 로컬 remote URL도 일치. 언더스코어 이름은 301 리다이렉트로만 남음 |
 | `.env` 무시 규칙 | **세 저장소 모두** `.env*` + `!.env.example` 적용. `.env`는 무시되고 `.env.example`은 추적 가능함을 실파일로 검증 |
-| Phase 6 전체(프론트 다크모드·디자인 토큰·`components.json` style·미설치 패키지·`.env.example`·Pretendard 폰트) | ✅ **완료(2026-09-02).** DoD 15항목 중 14항목 전수 통과, 1항목(`page.tsx`에 `"use client"`)은 검증 대상 부재로 N/A(사용자 확인). `globals.css`를 CLAUDE.md 8장 팔레트로 전면 교체하고 `.dark`/`@custom-variant dark`를 제거해 `@media (prefers-color-scheme: dark)`로 전환, `components.json` style을 `new-york`으로, `motion`·`sonner`·`date-fns`·`dompurify`·`@tanstack/react-query`·`@tiptap/react`·`@tiptap/starter-kit` 설치, Pretendard 가변 폰트를 `next/font/local`로 로드, `apiClient`·`errorMessages`·`validation`·`sanitize`·쿼리 키 상수화·공용 컴포넌트 4종·`src/types/`·`.env.example` 작성 |
+| Phase 6 전체(프론트 다크모드·디자인 토큰·`components.json` style·미설치 패키지·`.env.example`·Pretendard 폰트) | ✅ **완료(2026-09-02).** DoD 15항목 중 14항목 전수 통과, 1항목(`page.tsx`에 `"use client"`)은 검증 대상 부재로 N/A(사용자 확인). `globals.css`를 CLAUDE.md 8장 팔레트로 전면 교체하고 `.dark`/`@custom-variant dark`를 제거해 `@media (prefers-color-scheme: dark)`로 전환, `components.json` style을 `new-york`으로, `motion`·`sonner`·`date-fns`·`dompurify`·`@tanstack/react-query`·`@tiptap/react`·`@tiptap/starter-kit` 설치, Pretendard 가변 폰트를 `next/font/local`로 로드, `apiClient`·`errorMessages`·`validation`·`sanitize`·쿼리 키 상수화·공용 컴포넌트 4종·`src/types/`·`.env.example` 작성. 병합·태그 `v0.6.0` 완료 |
+| Phase 7 전체(로그인·회원가입·구글 콜백·라우트 보호) | ✅ **완료(2026-09-02).** DoD 17항목(계획상 "16항목", 실제로는 17개 — Phase 6의 "14항목" 오기와 같은 패턴) 전수 통과. `authService`·`useAuth`(exp 디코드 게이팅, Context 없이 authMeKey 캐시가 전역 상태), `(main)` 보호 레이아웃, `/login`·`/signup`·`/oauth/callback` 작성. 백엔드 실제 종료 후 네트워크 실패 문구 확인, 만료 토큰 주입 시 `/auth/me` 요청 자체가 발생하지 않음을 네트워크 로그로 확인, 키보드만으로 가입 완주까지 실기동 검증. 병합·태그는 사용자 승인 대기 |
 
 ---
 
@@ -309,7 +320,7 @@ docs/PRD.md 3장 (ID 부여)
 
 ### 5.9 문서 수정 시
 
-`CLAUDE.md`(**v1.10**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.4**)는 상단에 **버전·최종 수정일**을 가진다.
+`CLAUDE.md`(**v1.10**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.5**)는 상단에 **버전·최종 수정일**을 가진다.
 내용을 고치면 **그 문서의 버전·수정일을 함께 올린다.** 세 문서의 버전은 서로 독립이며 일치할 필요가 없다.
 
 ⚠️ **이 줄의 버전 번호도 함께 고친다.** 대상 문서만 올리고 여기를 두면 규칙 문서가 거짓이 된다.
@@ -545,6 +556,14 @@ App Router에는 `router.events`도, 공식 내비게이션 차단 API도 **없�
 - **React Server Components 경계는 "이 파일에 `use client`가 있는가"가 아니라 "가장 가까운 클라이언트 경계 조상이 있는가"로 정해진다.** `Header.tsx`·`Button.tsx`처럼 `"use client"`가 없는 컴포넌트라도, 이들을 렌더하는 페이지가 클라이언트 컴포넌트면 트리 전체가 클라이언트 번들에 포함돼 이벤트 핸들러가 정상 동작한다. 반대로 서버 컴포넌트에서 이런 컴포넌트에 `onClick` 같은 함수 prop을 내려보내면 "Event handlers cannot be passed to Client Component props" 런타임 에러가 난다 — 이 프로젝트의 모든 실제 `page.tsx`는 `"use client"`이므로(7.4) 실전에서는 문제가 안 되지만, 검증용 임시 페이지를 만들 때 빠뜨리기 쉽다.
 - **`globals.css`의 `@theme inline` 블록에서 `--font-sans: var(--font-sans)`처럼 자기참조로 두면 실제로는 아무 폰트도 지정하지 않은 것과 같다.** Pretendard를 `next/font/local`로 로드했어도 `--font-sans`가 로드한 변수(`var(--font-pretendard)`)를 가리키지 않으면 `font-sans` 유틸리티가 폴백 스택으로 조용히 떨어진다. 폰트를 바꿀 때는 로드 지점(`layout.tsx`의 `localFont({ variable })`)과 참조 지점(`globals.css`의 `--font-sans`)을 항상 함께 확인한다.
 - **`localStorage`에 접근하는 함수는 전부 `typeof window === "undefined"` 가드를 넣는다.** `apiClient.ts`의 `getStoredToken`에는 가드가 있었지만 `setStoredToken`·`clearStoredToken`에는 빠져 있어, 브라우저 밖(Node 등)에서 401 처리 경로를 타면 `ReferenceError: window is not defined`로 죽었다. `tsc`는 `window`가 `dom` lib에 포함된 유효한 타입이라 이 결함을 잡지 못한다 — 반드시 실제 실행(Node의 네이티브 TS 실행 또는 브라우저)으로 검증한다.
+
+### 7.11 Phase 7에서 확정된 규칙
+
+- **`app/oauth/callback/`은 `(auth)` 그룹이 아니라 `src/app/` 바로 아래(최상위)에 둔다.** `CLAUDE.md` 2장 구조도가 정본이며, 계획 단계에서 생성된 태스크 지침 텍스트가 이와 다르게(`(auth)/oauth/callback`) 적혀 있어도 지침 쪽이 오타다. **지침 텍스트와 구조도가 갈리면 구조도를 따른다** — 이 프로젝트에 `(auth)` 전용 레이아웃이 없어 실질적 라우팅 차이는 없지만, 저장소 구조 일관성을 위해 위치를 지킨다.
+- **`useAuth().login`이 호출할 엔드포인트를 계획 텍스트만 보고 옮기지 않는다.** 태스크 계획 단계의 지침이 "`login`이 `/auth/signup`을, `signup`이 `/auth/login`을 호출한다"처럼 **엔드포인트가 서로 뒤바뀐 채** 적혀 있었던 사례가 있다. 두 함수 모두 `TokenResponse`를 반환하는 동일한 타입 시그니처라 `tsc`가 잡지 못한다 — **항상 백엔드 실소스(`AuthController.java`)와 대조한다.**
+- **`/oauth/callback`처럼 `router.replace()`로 쿼리를 지운 뒤 `router.push()`로 다시 이동하는 페이지는, 그 사이 `useSearchParams()` 변경으로 effect가 재실행될 수 있음을 전제로 설계한다.** `replace`가 URL을 바꾸면 컴포넌트가 새 `searchParams`로 리렌더되어 effect가 다시 돈다 — 이때 `token`이 이미 지워진 상태라 "토큰 없음 → `/login`"으로 잘못 튕기지 않도록, `useRef` 가드로 effect 본문이 실질적으로 한 번만 실행되게 한다.
+- **`useState` + 수동 검증 폼에서 `touched`(터치 여부)는 `onBlur`가 아니라 `onChange` 최초 호출에서 켠다.** 실시간 검증(`PRD.md` 5.3)의 취지가 "타이핑하는 동안 즉시 안내"이므로, blur 기반으로 하면 사용자가 다른 필드로 포커스를 옮기기 전까지 안내가 뜨지 않는다. 첫 렌더(빈 칸)에는 에러를 숨기는 목적은 "아직 한 번도 입력하지 않은 필드"로 판정해도 동일하게 달성된다.
+- **`npm run build` 실행 직후 `npm run dev` 서버가 응답 불능 상태(포트는 LISTENING인데 요청이 타임아웃)가 되는 현상이 이 환경에서 반복 재현된다** (Phase 7에서 2회). 원인은 특정하지 못했다(Turbopack 캐시 충돌로 추정되나 미확인). **`npm run build`를 돌린 뒤에는 항상 `netstat`으로 기존 dev 서버 PID를 확인해 `Stop-Process -Force`로 종료하고 재기동한다** — 재시작 없이 이어서 브라우저 검증을 시도하면 모든 요청이 타임아웃돼 원인 파악에 시간을 허비한다.
 
 ---
 
