@@ -1,7 +1,7 @@
 # 개발 규칙 (shrimp-rules.md)
 
 > **대상**: 이 저장소에서 작업하는 Coding Agent 전용. 사람을 위한 튜토리얼이 아니다.
-> **최종 검증**: 2026-09-01 · 실제 파일 스캔 기준
+> **최종 검증**: 2026-09-02 · 실제 파일 스캔 기준
 > **이 문서의 지위**: **작업 절차 규칙**이다. **기술 스펙의 정본이 아니다.**
 > 스펙이 필요하면 `CLAUDE.md`를 읽는다. 이 문서는 "무엇을, 어느 파일을, 어떤 순서로 함께 고치는가"만 정의한다.
 
@@ -46,23 +46,25 @@
 
 ---
 
-## 3. 현재 상태 스냅샷 (2026-09-01 검증)
+## 3. 현재 상태 스냅샷 (2026-09-02 검증)
 
 작업 착수 전 이 표와 실제 상태가 같은지 확인한다. 다르면 이 절을 먼저 갱신한다.
 
 | 저장소 | 브랜치 | 커밋 | 원격 | 비고 |
 |---|---|---|---|---|
-| `todo-project` | `main` (`0340c15`) · `develop` (`7505dbc`) | main 5 | `main`·`develop` 푸시 완료 | 21파일. 태그 `v0.0.0` |
-| `todo-backend` | `main` (`b4ff5f4`) · `develop` (`49a6bb5`) | main 13 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`, `v0.1.0`, `v0.2.0`, `v0.3.0` |
-| `todo-frontend` | `main` (+ `develop`, 동일 해시 `c62d5b6`) | 1 | `origin` 푸시 완료 | 22파일. 태그 `v0.0.0` |
+| `todo-project` | `main` (`370a7ab`) · `develop` (`4fb8069`) | main 11 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`. `docs/ROADMAP.md` 미커밋(이번 Phase 5 문서 동기화 작업분) |
+| `todo-backend` | `main` (`9e8eeda`) · `develop` (`cf6229e`) | main 16 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`~`v0.4.0`. Phase 5 작업분 미커밋(아래 참조) |
+| `todo-frontend` | `main` (+ `develop`, 동일 해시 `c62d5b6`) | 1 | `origin` 푸시 완료 | 22파일. 태그 `v0.0.0`. 변경 없음 |
 
 **세 저장소 모두 `develop` 분기 + `origin` 푸시 완료이며, `master`는 없다.**
-태그 4종은 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.3.0`은 `b4ff5f4`(= `main`)를 가리킨다.
+태그는 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.4.0`은 `9e8eeda`(= `todo-backend main`)를 가리킨다.
 `main`이 `develop`보다 병합 커밋 하나만큼 앞선 구조는 Phase 1에서 확립된 패턴이며 오류가 아니다.
 
-⚠️ **`todo-backend`의 Phase 4 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
-`main` 브랜치 작업 트리에 **17건의 미커밋 변경**(수정 4 + 신규 13)으로 존재한다.
-커밋·병합·태그 `v0.4.0`은 사용자 승인 후 별도 태스크에서 수행한다. 아래 소스 목록은 **작업 트리 기준**이다.
+⚠️ **`todo-backend`의 Phase 5 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
+`main` 브랜치 작업 트리에 **수정 2 + 신규 4(테스트 디렉터리 포함)**로 존재한다
+(`SecurityConfig.java`·`application.yml` 수정, `CustomOAuth2UserService.java`·`OAuth2SuccessHandler.java`·
+`OAuth2FailureHandler.java`·`config/CustomOAuth2UserServiceTest.java` 신규).
+커밋·병합·태그 `v0.5.0`은 사용자 승인 후 별도 태스크(태스크29)에서 수행한다. 아래 소스 목록은 **작업 트리 기준**이다.
 
 원격은 `git@github.com:stygia98/{todo-project,todo-backend,todo-frontend}.git`이다(언더스코어 이름은 301 리다이렉트로만 남아 있다).
 
@@ -73,13 +75,16 @@
 ```
 todo-backend/src/main/java/com/example/TodoBackendApplication.java   # @SpringBootApplication + @EnableJpaAuditing
 
-# --- config (Phase 1: 2개 / Phase 3: 4개 추가) ---
-todo-backend/src/main/java/com/example/config/SecurityConfig.java    # [P3 확장] csrf.disable, STATELESS, permitAll, CORS, exceptionHandling
+# --- config (Phase 1: 2개 / Phase 3: 4개 추가 / Phase 5: 3개 추가) ---
+todo-backend/src/main/java/com/example/config/SecurityConfig.java    # [P3 확장][P5 수정] csrf.disable, STATELESS, permitAll, CORS, exceptionHandling, oauth2Login 배선
 todo-backend/src/main/java/com/example/config/OpenApiConfig.java     # bearerAuth 스킴
 todo-backend/src/main/java/com/example/config/JwtTokenProvider.java  # [P3] 발급·검증. signWith(key, Jwts.SIG.HS256)
 todo-backend/src/main/java/com/example/config/JwtAuthenticationFilter.java     # [P3] sub → id 조회, deleted_at IS NULL
 todo-backend/src/main/java/com/example/config/JwtAuthenticationEntryPoint.java # [P3] 필터 단계 401을 ApiResponse 포맷으로
 todo-backend/src/main/java/com/example/config/JwtAccessDeniedHandler.java      # [P3] 필터 단계 403을 ApiResponse 포맷으로
+todo-backend/src/main/java/com/example/config/CustomOAuth2UserService.java    # [P5 신규] OidcUserService 확장. 신규가입/기존조회/충돌거부 3분기
+todo-backend/src/main/java/com/example/config/OAuth2SuccessHandler.java       # [P5 신규] JWT 발급 후 {FRONTEND_URL}/oauth/callback?token= 302
+todo-backend/src/main/java/com/example/config/OAuth2FailureHandler.java       # [P5 신규] email_conflict → /login?error=email_conflict 302
 
 # --- domain (Phase 2 기본 + Phase 4 확장) ---
 todo-backend/src/main/java/com/example/domain/BaseEntity.java        # @MappedSuperclass, 감사 필드(Instant)
@@ -117,13 +122,14 @@ todo-backend/src/main/java/com/example/dto/TodoResponse.java           # user �
 todo-backend/src/main/resources/db/seed-dev.sql                        # 계정1 + Todo 100건. 기능 확인용
 todo-backend/src/main/resources/db/seed-perf.sql                       # 같은 계정에 Todo 10000건. 성능 측정 전용
 
-todo-backend/src/main/resources/{application,application-local,application-prod}.yml
+todo-backend/src/main/resources/{application,application-local,application-prod}.yml   # [P5 수정] application.yml에 security.oauth2.client.registration.google 추가
 todo-backend/src/test/java/com/example/TodoBackendApplicationTests.java    # contextLoads
 todo-backend/src/test/java/com/example/domain/UserRepositoryTest.java      # @DataJpaTest 5건
 todo-backend/src/test/java/com/example/domain/TodoRepositoryTest.java      # [P4 수정] 11건. search 테스트 3건이 Specification 방식으로 교체됨
 todo-backend/src/test/java/com/example/controller/AuthControllerTest.java  # [P3] @SpringBootTest + MockMvc 12건
 todo-backend/src/test/java/com/example/controller/TodoControllerTest.java  # [P4 신규] 21건. 14장 4~7번 + DoD 전용 케이스
 todo-backend/src/test/java/com/example/service/TodoServiceTest.java        # [P4 신규] 8건. 정렬 화이트리스트·소유권·PUT/toggle/delete·정화
+todo-backend/src/test/java/com/example/config/CustomOAuth2UserServiceTest.java  # [P5 신규] 5건. processOidcUser 직접 호출(같은 패키지), MockMvc 미사용
 todo-backend/src/test/resources/application-test.yml                       # todolist_test, create-drop + [P3] jwt·app 픽스처
 
 todo-frontend/src/app/{layout.tsx,page.tsx,globals.css}              # create-next-app 기본값
@@ -131,23 +137,23 @@ todo-frontend/src/components/ui/button.tsx                           # shadcn �
 todo-frontend/src/lib/utils.ts                                       # cn()
 ```
 
-백엔드 테스트는 **총 58건**이다(`AuthControllerTest` 12 + `TodoControllerTest` 21 + `TodoRepositoryTest` 11 +
-`TodoServiceTest` 8 + `UserRepositoryTest` 5 + `contextLoads` 1).
+백엔드 테스트는 **총 63건**이다(`AuthControllerTest` 12 + `TodoControllerTest` 21 + `TodoRepositoryTest` 11 +
+`TodoServiceTest` 8 + `UserRepositoryTest` 5 + `CustomOAuth2UserServiceTest` 5 + `contextLoads` 1).
 `AuthControllerTest`의 12건은 14장 "통합 테스트 1~3번"(시나리오 3개)을, `TodoControllerTest`의 21건 중
 15건은 "통합 테스트 4~7번"(시나리오 4개)을 `@Nested` 묶음으로 구현한 것이다. **묶음 수(3, 4)가 시나리오 수이지
 `@Test` 메서드 수가 아니다.** `TodoControllerTest`의 나머지 6건(PUT/toggle 2·입력검증 3·N+1 1)은
-14장이 요구하지 않는 DoD 전용 추가 케이스다.
+14장이 요구하지 않는 DoD 전용 추가 케이스다. `CustomOAuth2UserServiceTest`의 5건은 14장 "통합 테스트 8번"
+(시나리오 1개, 서비스 단위 테스트로 작성)에 nickname 폴백·절삭 등 DoD 전용 케이스를 더한 것이다.
 
 `domain/`·`config/`·`controller/`·`service/`·`dto/`·`exception/`·`validation/`에 모두 클래스가 있다.
-**Phase 4 로 이 목록이 완결됐다.** 다음 확장은 Phase 5(OAuth2)의 `CustomOAuth2UserService`·
-`OAuth2SuccessHandler`·`OAuth2FailureHandler`다.
+**Phase 5 로 백엔드 구현 목록이 완결됐다.** 다음 확장은 Phase 6(프론트 스캐폴딩) 이후 Phase 7~9의 프론트 화면 구현이다.
 프론트의 `src/hooks/`, `src/types/`, `src/components/{common,todo}/`는 **아직 없다.**
 
 ⚠️ **`validation/` 패키지는 `CLAUDE.md` 2장 구조도에 없다.** 임의 추가가 아니라, 4장이 요구한
 `@MaxByteLength` 커스텀 validator를 둘 곳이 필요해 신설했다. 구조도는 예시이지 금지 목록이 아니며,
 검증 애노테이션을 `dto/`에 섞으면 DTO와 재사용 가능한 제약이 뒤엉킨다. **스펙 변경이 아니므로 `CLAUDE.md`를 고치지 않았다.**
 
-**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 4(Todo API) **✅ DoD 16항목 전수 통과(2026-09-01). 단 Swagger 확인은 `curl` 대체 검증** · 6(프론트 스캐폴딩) 🟡. 다음은 Phase 5(구글 OAuth2).
+**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 4(Todo API) **✅ DoD 16항목 전수 통과(2026-09-01). 단 Swagger 확인은 `curl` 대체 검증** · 5(구글 OAuth2) **✅ DoD 5항목 전수 통과(2026-09-02). 라이브 브라우저 검증** · 6(프론트 스캐폴딩) 🟡(Phase 1~5와 병렬 진행 중, 3.1의 부채 6항목이 남은 작업). 다음은 Phase 5 커밋·병합·태그(태스크29, 사용자 승인 대기) 후 Phase 7(목록 화면).
 
 ### 3.1 미해결 부채 — 착수 전 반드시 확인
 
@@ -160,7 +166,7 @@ todo-frontend/src/lib/utils.ts                                       # cn()
 | 5 | 프론트 `.env.example` | 파일이 아직 없다 (무시 규칙은 준비됨) | Phase 6 |
 | 6 | Pretendard 폰트 | `src/app/fonts/` 없음 | Phase 6 |
 
-### 3.2 해소된 부채 (2026-08-28 · 2026-09-01)
+### 3.2 해소된 부채 (2026-08-28 · 2026-09-01 · 2026-09-02)
 
 | 항목 | 조치 |
 |---|---|
@@ -286,7 +292,7 @@ docs/PRD.md 3장 (ID 부여)
 
 ### 5.9 문서 수정 시
 
-`CLAUDE.md`(**v1.10**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.2**)는 상단에 **버전·최종 수정일**을 가진다.
+`CLAUDE.md`(**v1.10**) · `docs/PRD.md`(**v1.8**) · `docs/ROADMAP.md`(**v2.3**)는 상단에 **버전·최종 수정일**을 가진다.
 내용을 고치면 **그 문서의 버전·수정일을 함께 올린다.** 세 문서의 버전은 서로 독립이며 일치할 필요가 없다.
 
 ⚠️ **이 줄의 버전 번호도 함께 고친다.** 대상 문서만 올리고 여기를 두면 규칙 문서가 거짓이 된다.
@@ -406,6 +412,13 @@ docs/PRD.md 3장 (ID 부여)
 - **정렬 화이트리스트는 서비스 진입부에서 처리하고 `Pageable`을 그대로 리포지토리에 넘기지 않는다.** `TodoService.sanitizeSort`가 `createdAt`·`dueDate` 밖의 정렬 프로퍼티를 걸러 `createdAt desc`로 대체한다. 컨트롤러에 두면 서비스를 직접 호출하는 테스트가 보호받지 못하고, 리포지토리에 그대로 넘기면 없는 프로퍼티로 500이 난다.
 - **HtmlSanitizer의 `rel`·`target` 강제는 `Safelist.addEnforcedAttribute`로 하고, 정화 후 재파싱하지 않는다.** `addAttributes`는 통과만 허용할 뿐 값을 채우지 않는다 — 사용자가 `rel="opener"`를 직접 넣으면 그대로 통과한다. `addEnforcedAttribute(tag, key, value)`로 정화 한 번에 값을 강제한다. 정화 후 HTML을 다시 파싱해 속성을 수동 주입하는 방식은 정화 보장이 흐려지고 `Document.OutputSettings.prettyPrint(false)`를 재적용하는 것을 놓치기 쉬워 쓰지 않는다.
 - **N+1 부재는 원리적 논증(LAZY 연관관계 + 응답 DTO에 필드 없음)이 아니라 Hibernate Statistics 실측으로 검증한다.** `EntityManagerFactory.unwrap(SessionFactory.class).getStatistics()`로 쿼리 실행 횟수를 잰다. **절대값이 아니라 항목 수 증가 전후의 차이를 비교한다** — `JwtAuthenticationFilter`가 매 요청마다 사용자 조회 쿼리 1건을 추가해 절대값이 매직 넘버가 되기 쉽다.
+
+### 6.9 Phase 5에서 확정된 규칙
+
+- **구글의 기본 scope에는 `openid`가 포함되므로 이 흐름은 OAuth2가 아니라 OIDC다.** `OAuth2UserService`가 아니라 **`OidcUserService`를 상속**해야 `userInfoEndpoint().oidcUserService(...)`로 등록할 수 있다. 일반 `OAuth2UserService`로 만들면 등록 지점(`.userInfoEndpoint().userService(...)`)부터 다르고, `OidcUser`가 제공하는 ID 토큰 클레임(email·name)에 접근할 수 없다.
+- **`CustomOAuth2UserService.processOidcUser`를 `loadUser`에서 분리해 package-private으로 둔다.** `loadUser`는 네트워크(구글 서버)와 통신하는 `super.loadUser()` 호출을 포함해 `MockMvc`나 순수 단위 테스트로 끝까지 검증할 수 없다. 판정 로직(신규가입/기존조회/충돌거부 3분기)만 `processOidcUser`로 떼어내면, 테스트가 `OidcIdToken`에 클레임을 직접 심어 만든 `DefaultOidcUser`를 이 메서드에 바로 넣어 네트워크 없이 검증할 수 있다. `CustomOAuth2UserServiceTest`가 이 방식이다(14장 통합 테스트 8번).
+- **계정 충돌은 `OAuth2AuthenticationException(new OAuth2Error("email_conflict"), message)`로 던진다.** 커스텀 `RuntimeException`을 던지면 Spring Security의 `oauth2Login` 필터가 이를 잡지 못해 500으로 새 버린다. `OAuth2AuthenticationException`이어야 `AuthenticationFailureHandler`(`OAuth2FailureHandler`)로 흐르고, `getError().getErrorCode()`로 실패 종류를 구분해 `email_conflict`와 그 외(`oauth_failed`)를 갈라 302 리다이렉트할 수 있다.
+- **로컬 계정 존재 여부로 인한 충돌 검증은 순서에 주의한다.** 같은 이메일로 GOOGLE 계정을 먼저 만든 상태에서는 로컬 회원가입 자체가 `EMAIL_DUPLICATED`로 막혀 충돌 시나리오(로컬 선점 + 구글 시도)를 재현할 수 없다. 라이브 검증 시 GOOGLE 계정을 먼저 정리한 뒤 로컬 가입 → 구글 로그인 재시도 순서로 진행한다.
 
 ---
 
