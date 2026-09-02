@@ -52,19 +52,19 @@
 
 | 저장소 | 브랜치 | 커밋 | 원격 | 비고 |
 |---|---|---|---|---|
-| `todo-project` | `main` (`69894a2`) · `develop` (`38400ea`) | main 20 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`. `docs/ROADMAP.md`·`shrimp-rules.md` 미커밋(이번 Phase 8 문서 동기화 작업분) |
+| `todo-project` | `main` (`529de26`) · `develop` (`f414712`) | main 23 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`. `docs/ROADMAP.md`·`shrimp-rules.md` 미커밋(이번 Phase 9 문서 동기화 작업분) |
 | `todo-backend` | `main` (`6f7aca6`) · `develop` (`de9b0f7`) | main 19 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`~`v0.5.0`. 미커밋 변경 없음(clean) |
-| `todo-frontend` | `main` (`61a14d5`) · `develop` (`24cc490`) | main 7 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`·`v0.6.0`·`v0.7.0`. Phase 8 작업분 미커밋(아래 참조) |
+| `todo-frontend` | `main` (`17e7da8`) · `develop` (`a4f9385`) | main 10 | `main`·`develop` 푸시 완료 | 태그 `v0.0.0`·`v0.6.0`·`v0.7.0`·`v0.8.0`. Phase 9 작업분 미커밋(아래 참조) |
 
 **세 저장소 모두 `develop` 분기 + `origin` 푸시 완료이며, `master`는 없다.**
-태그는 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.5.0`은 `6f7aca6`(= `todo-backend main`), `v0.6.0`·`v0.7.0`은 각각 `todo-frontend main`의 Phase 6·Phase 7 병합 커밋을 가리킨다.
+태그는 전부 annotated이며 원격에 peeled ref(`^{}`)와 함께 존재한다. `v0.5.0`은 `6f7aca6`(= `todo-backend main`), `v0.6.0`·`v0.7.0`·`v0.8.0`은 각각 `todo-frontend main`의 Phase 6·Phase 7·Phase 8 병합 커밋을 가리킨다.
 `main`이 `develop`보다 병합 커밋 하나만큼 앞선 구조는 Phase 1에서 확립된 패턴이며 오류가 아니다.
 
-⚠️ **`todo-frontend`의 Phase 8 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
-`main` 브랜치 작업 트리에 **신규/수정 다수**로 존재한다(`hooks/useTodos.ts`·`useLeaveConfirm.ts`, `hooks/useAuth.ts` 수정,
-`components/todo/`(TodoEditor·TodoForm·FormSkeleton·TodoItem·TodoList), `components/ui/calendar.tsx`·`checkbox.tsx`·`popover.tsx`·`select.tsx`,
-`app/(main)/todos/page.tsx` 전면 재작성, `app/(main)/todos/new/`·`app/(main)/todos/[id]/` 신규, `lib/queryKeys.ts` 수정,
-`package.json`·`package-lock.json`(Tiptap 확장·shadcn 컴포넌트 의존성 추가)). 커밋·병합·태그 `v0.8.0`은 사용자 승인 후 별도 태스크에서 수행한다.
+⚠️ **`todo-frontend`의 Phase 9 작업분은 이 스냅샷 시점에 아직 커밋되지 않았다.**
+`main` 브랜치 작업 트리에 **기존 파일 수정만**으로 존재한다(신규 파일 없음) — `hooks/useTodos.ts`(useToggleTodo 낙관적 업데이트+scope 승격,
+useDeleteTodo onError 토스트 추가), `components/todo/TodoItem.tsx`(자체 useToggleTodo 호출로 전환, 토글 스프링 애니메이션),
+`components/todo/TodoList.tsx`(onToggle/togglingId 제거, AnimatePresence+stagger 등장·퇴장), `app/(main)/todos/page.tsx`(toggleMutation 관련 코드 제거).
+커밋·병합·태그 `v0.9.0`은 사용자 승인 후 별도 태스크에서 수행한다.
 아래 소스 목록은 **작업 트리 기준**이다.
 
 원격은 `git@github.com:stygia98/{todo-project,todo-backend,todo-frontend}.git`이다(언더스코어 이름은 301 리다이렉트로만 남아 있다).
@@ -167,7 +167,7 @@ todo-frontend/src/app/(auth)/login/page.tsx                           # [P7 신�
 todo-frontend/src/app/(auth)/signup/page.tsx                          # [P7 신규] touched는 blur가 아니라 onChange 최초 호출에서 true — 타이핑 중 실시간 검증
 todo-frontend/src/app/oauth/callback/page.tsx                         # [P7 신규] (auth) 그룹이 아니라 oauth/ 최상위(CLAUDE.md 2장 구조도). hasHandledRef로 중복 처리 가드
 
-todo-frontend/src/hooks/useTodos.ts                                   # [P8 신규] useTodos/useCreateTodo/useUpdateTodo/useToggleTodo/useDeleteTodo(낙관적 삭제)/useUpdateTodosQuery
+todo-frontend/src/hooks/useTodos.ts                                   # [P8 신규][P9 수정] useTodos/useCreateTodo/useUpdateTodo/useUpdateTodosQuery. useToggleTodo(id,params)는 P9에서 scope 낙관적 업데이트로 승격, useDeleteTodo onError에 토스트 추가
 todo-frontend/src/hooks/useLeaveConfirm.ts                            # [P8 신규] beforeunload+popstate(더미 history 1개)+confirmAndLeave 3계층
 todo-frontend/src/hooks/useAuth.ts                                    # [P8 수정] 하이드레이션 불일치 수정(hasMounted 게이트로 isPending도 강제 true)
 todo-frontend/src/lib/queryKeys.ts                                    # [P8 수정] TodosQueryParams를 export로 변경
@@ -178,9 +178,9 @@ todo-frontend/src/components/ui/calendar.tsx                          # [P8 신�
 todo-frontend/src/components/todo/TodoEditor.tsx                      # [P8 신규] Tiptap 통합. StarterKit heading[2,3]/strike:false/horizontalRule:false/underline:false, link은 내장 옵션. 툴바 버튼 onMouseDown preventDefault(포커스 유지)
 todo-frontend/src/components/todo/TodoForm.tsx                        # [P8 신규] title/priority/dueDate/content 4필드. onSubmit: Promise<boolean>. 완료 체크박스 없음(의도). 성공 시에만 dirty 기준선(ref) 갱신
 todo-frontend/src/components/todo/FormSkeleton.tsx                    # [P8 신규] 폼 형태 스켈레톤
-todo-frontend/src/components/todo/TodoItem.tsx                        # [P8 신규] 체크박스+제목(완료 시 취소선)+우선순위 뱃지+마감일+삭제
-todo-frontend/src/components/todo/TodoList.tsx                        # [P8 신규] TodoItem 목록 래퍼
-todo-frontend/src/app/(main)/todos/page.tsx                           # [P8 전면 재작성] URL 쿼리 기반 검색·필터·페이지, <Suspense>, 4가지 화면 상태 분기. Phase 7 플레이스홀더를 대체
+todo-frontend/src/components/todo/TodoItem.tsx                        # [P8 신규][P9 수정] 체크박스+제목(완료 시 취소선)+우선순위 뱃지+마감일+삭제. P9: 자체 useToggleTodo(id,params) 호출로 전환, 토글 스프링 애니메이션
+todo-frontend/src/components/todo/TodoList.tsx                        # [P8 신규][P9 수정] TodoItem 목록 래퍼. P9: onToggle/togglingId 제거하고 params 통로로, AnimatePresence+stagger 등장·퇴장
+todo-frontend/src/app/(main)/todos/page.tsx                           # [P8 전면 재작성][P9 수정] URL 쿼리 기반 검색·필터·페이지, <Suspense>, 4가지 화면 상태 분기. Phase 7 플레이스홀더를 대체. P9: toggleMutation/handleToggle/togglingId 제거(TodoItem이 자체 소유)
 todo-frontend/src/app/(main)/todos/new/page.tsx                       # [P8 신규] TodoForm + useLeaveConfirm 연결
 todo-frontend/src/app/(main)/todos/[id]/page.tsx                      # [P8 신규] 단건 조회+404 전용 화면+삭제. key={data?"loaded":"loading"}로 강제 리마운트
 ```
@@ -197,15 +197,16 @@ todo-frontend/src/app/(main)/todos/[id]/page.tsx                      # [P8 신�
 **Phase 5 로 백엔드 구현 목록이 완결됐다.**
 
 프론트는 **Phase 6 으로 스캐폴딩 목록이 완결됐다.** `src/types/`·`src/lib/`·`src/components/{ui,common,providers}/`가
-모두 채워졌다. Phase 7에서 `src/hooks/`(`useAuth`)가 신설됐다. **Phase 8 로 `src/components/todo/`(TodoEditor·TodoForm·
-FormSkeleton·TodoItem·TodoList)와 `useTodos`·`useLeaveConfirm`이 채워지며 프론트 화면 구현이 완결됐다.** 남은 것은
-Phase 9(인터랙션 다듬기 — 토글 낙관적 업데이트 정교화·연타 대비·sonner 토스트·Motion 애니메이션)뿐이다.
+모두 채워졌다. Phase 7에서 `src/hooks/`(`useAuth`)가 신설됐다. Phase 8 로 `src/components/todo/`(TodoEditor·TodoForm·
+FormSkeleton·TodoItem·TodoList)와 `useTodos`·`useLeaveConfirm`이 채워지며 프론트 화면 구현이 완결됐다. **Phase 9 로
+토글 낙관적 업데이트 승격(mutation scope 직렬화)·삭제 실패 토스트·Motion 애니메이션 3종이 더해지며 인터랙션 다듬기까지
+끝나, `todo-frontend`의 신규 구현은 여기서 완결된다.** 남은 것은 Phase 10(전체 검증)·11(AWS 배포)뿐이다.
 
 ⚠️ **`validation/` 패키지는 `CLAUDE.md` 2장 구조도에 없다.** 임의 추가가 아니라, 4장이 요구한
 `@MaxByteLength` 커스텀 validator를 둘 곳이 필요해 신설했다. 구조도는 예시이지 금지 목록이 아니며,
 검증 애노테이션을 `dto/`에 섞으면 DTO와 재사용 가능한 제약이 뒤엉킨다. **스펙 변경이 아니므로 `CLAUDE.md`를 고치지 않았다.**
 
-**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 4(Todo API) **✅ DoD 16항목 전수 통과(2026-09-01). 단 Swagger 확인은 `curl` 대체 검증** · 5(구글 OAuth2) **✅ DoD 5항목 전수 통과(2026-09-02). 라이브 브라우저 검증. 병합·태그 `v0.5.0` 완료** · 6(프론트 스캐폴딩) **✅ DoD 15항목 중 14항목 전수 통과, 1항목(`"use client"`) N/A(2026-09-02). 병합·태그 `v0.6.0` 완료** · 7(인증 화면) **✅ DoD 17항목(계획상 "16항목") 전수 통과(2026-09-02). 구글 로그인은 JWT 직접 주입으로 검증(백엔드 리다이렉트는 Phase 5에서 라이브 검증됨). 병합·태그 `v0.7.0` 완료** · 8(Todo 화면) **✅ DoD 26항목(계획상 "27항목") 전수 통과(2026-09-02). 360px 실측은 도구 한계로 555px 대체 검증**. 다음은 Phase 8 커밋·병합·태그 `v0.8.0`(사용자 승인 대기) 후 Phase 9(인터랙션 다듬기).
+**진행 Phase**: 0(저장소 초기화) **✅** · 1(백엔드 스캐폴딩) **✅ DoD 9항목 전수 통과** · 2(도메인 & DB) **✅ DoD 6항목 전수 통과(2026-08-31 재검증)** · 3(인증) **✅ DoD 15항목 전수 통과(2026-09-01). 단 DoD 12는 `curl` 대체 검증** · 4(Todo API) **✅ DoD 16항목 전수 통과(2026-09-01). 단 Swagger 확인은 `curl` 대체 검증** · 5(구글 OAuth2) **✅ DoD 5항목 전수 통과(2026-09-02). 라이브 브라우저 검증. 병합·태그 `v0.5.0` 완료** · 6(프론트 스캐폴딩) **✅ DoD 15항목 중 14항목 전수 통과, 1항목(`"use client"`) N/A(2026-09-02). 병합·태그 `v0.6.0` 완료** · 7(인증 화면) **✅ DoD 17항목(계획상 "16항목") 전수 통과(2026-09-02). 구글 로그인은 JWT 직접 주입으로 검증(백엔드 리다이렉트는 Phase 5에서 라이브 검증됨). 병합·태그 `v0.7.0` 완료** · 8(Todo 화면) **✅ DoD 26항목(계획상 "27항목") 전수 통과(2026-09-02). 360px 실측은 도구 한계로 555px 대체 검증. 병합·태그 `v0.8.0` 완료** · 9(인터랙션 다듬기) **✅ DoD 6항목 전수 통과(2026-09-02, 처음으로 계획 단계 집계와 실제 개수가 일치했다). 연타 대비는 fetch 지연 조작+동일 틱 5회 클릭으로 실제 레이스 컨디션을 재현해 mutation scope 직렬화를 실증**. 다음은 Phase 9 커밋·병합·태그 `v0.9.0`(사용자 승인 대기) 후 Phase 10(전체 검증).
 
 ### 3.1 미해결 부채 — 착수 전 반드시 확인
 
@@ -230,7 +231,8 @@ Phase 6 완료로 이전에 있던 6항목이 전부 해소됐다(3.2 참조). �
 | `.env` 무시 규칙 | **세 저장소 모두** `.env*` + `!.env.example` 적용. `.env`는 무시되고 `.env.example`은 추적 가능함을 실파일로 검증 |
 | Phase 6 전체(프론트 다크모드·디자인 토큰·`components.json` style·미설치 패키지·`.env.example`·Pretendard 폰트) | ✅ **완료(2026-09-02).** DoD 15항목 중 14항목 전수 통과, 1항목(`page.tsx`에 `"use client"`)은 검증 대상 부재로 N/A(사용자 확인). `globals.css`를 CLAUDE.md 8장 팔레트로 전면 교체하고 `.dark`/`@custom-variant dark`를 제거해 `@media (prefers-color-scheme: dark)`로 전환, `components.json` style을 `new-york`으로, `motion`·`sonner`·`date-fns`·`dompurify`·`@tanstack/react-query`·`@tiptap/react`·`@tiptap/starter-kit` 설치, Pretendard 가변 폰트를 `next/font/local`로 로드, `apiClient`·`errorMessages`·`validation`·`sanitize`·쿼리 키 상수화·공용 컴포넌트 4종·`src/types/`·`.env.example` 작성. 병합·태그 `v0.6.0` 완료 |
 | Phase 7 전체(로그인·회원가입·구글 콜백·라우트 보호) | ✅ **완료(2026-09-02).** DoD 17항목(계획상 "16항목", 실제로는 17개 — Phase 6의 "14항목" 오기와 같은 패턴) 전수 통과. `authService`·`useAuth`(exp 디코드 게이팅, Context 없이 authMeKey 캐시가 전역 상태), `(main)` 보호 레이아웃, `/login`·`/signup`·`/oauth/callback` 작성. 백엔드 실제 종료 후 네트워크 실패 문구 확인, 만료 토큰 주입 시 `/auth/me` 요청 자체가 발생하지 않음을 네트워크 로그로 확인, 키보드만으로 가입 완주까지 실기동 검증. **병합·태그 `v0.7.0` 완료** |
-| Phase 8 전체(Todo 목록·검색·필터·페이지네이션·Tiptap 편집·이탈 확인) | ✅ **완료(2026-09-02).** DoD 26항목(계획상 "27항목", 실제로는 26개 — Phase 6·7과 같은 집계 오기 패턴) 전수 통과. `useTodos`(React Query, 낙관적 삭제)·`useLeaveConfirm`(3계층: beforeunload+버튼+popstate)·`TodoEditor`(Tiptap, StarterKit 커스텀)·`TodoForm`(공용, `onSubmit: Promise<boolean>`)·목록/신규/상세 3라우트 작성. `db/seed-dev.sql`(100건) 적용해 페이지네이션·정렬 실측, 리치 콘텐츠·XSS 페이로드를 DB에 직접 주입해 서식 유지·sanitize 실증, React Query 기본 `retry:3`을 감안해 5회 연속 실패로 에러 상태 재현. 360px 정밀 실측은 `resize_window` 도구 한계로 555px 대체 검증. 병합·태그 `v0.8.0`은 사용자 승인 대기 |
+| Phase 8 전체(Todo 목록·검색·필터·페이지네이션·Tiptap 편집·이탈 확인) | ✅ **완료(2026-09-02).** DoD 26항목(계획상 "27항목", 실제로는 26개 — Phase 6·7과 같은 집계 오기 패턴) 전수 통과. `useTodos`(React Query, 낙관적 삭제)·`useLeaveConfirm`(3계층: beforeunload+버튼+popstate)·`TodoEditor`(Tiptap, StarterKit 커스텀)·`TodoForm`(공용, `onSubmit: Promise<boolean>`)·목록/신규/상세 3라우트 작성. `db/seed-dev.sql`(100건) 적용해 페이지네이션·정렬 실측, 리치 콘텐츠·XSS 페이로드를 DB에 직접 주입해 서식 유지·sanitize 실증, React Query 기본 `retry:3`을 감안해 5회 연속 실패로 에러 상태 재현. 360px 정밀 실측은 `resize_window` 도구 한계로 555px 대체 검증. **병합·태그 `v0.8.0` 완료** |
+| Phase 9 전체(토글·삭제 낙관적 업데이트 승격·연타 대비·Motion 애니메이션·sonner 토스트) | ✅ **완료(2026-09-02).** DoD 6항목 전수 통과(계획 단계 집계와 실제 개수가 처음으로 일치). `useToggleTodo(id, params)`를 TodoItem이 자체 호출하는 구조로 리팩터링해 `scope: { id: 'todo-toggle-${id}' }`로 항목별 요청을 직렬화(CLAUDE.md 9장 방법 1 채택, 방법 2로 전환 불필요하다고 판단). `window.fetch` 응답 지연 조작 + 동일 JS 틱 내 5회 연속 클릭으로 실제 레이스 컨디션을 재현해, 5건의 요청이 전혀 겹치지 않고 순차 실행되며 최종 상태가 마지막 클릭값과 일치함을 실증. Motion 애니메이션 구현 중 `animate={{scale:[1,1.15,1]}}`가 "spring은 2-keyframe만 지원"이라는 런타임 예외를 던지는 실제 버그를 발견해 `key` 기반 리마운트(1.15→1 2-keyframe)로 수정. 병합·태그 `v0.9.0`은 사용자 승인 대기 |
 
 ---
 
@@ -591,6 +593,13 @@ App Router에는 `router.events`도, 공식 내비게이션 차단 API도 **없�
 - **Tiptap 툴바 버튼은 `onMouseDown={(e) => e.preventDefault()}`를 반드시 건다.** 버튼 클릭이 브라우저 기본 포커스 이동을 일으켜 에디터 selection이 풀리고, 그 직후 입력이 선택돼 있던 텍스트를 지워버린다(ProseMirror 계열 에디터의 표준 관행). `onClick`에만 로직을 넣고 이 처리를 빠뜨리면 툴바 버튼을 누른 뒤 첫 타이핑에서만 재현되는, 원인을 찾기 어려운 버그가 된다.
 - **`TodoForm`의 `onSubmit`은 `Promise<void>`가 아니라 `Promise<boolean>`이어야 한다.** 페이지 핸들러(`new`/`[id]`)가 에러를 잡아 `submitError` state로만 표시하고 예외를 다시 던지지 않으므로(폼 입력을 유지해야 하는 `TODO-13` 요구 때문에 reject 방식을 쓸 수 없다), `TodoForm`이 저장 성공 여부를 알 방법은 반환값뿐이다. 성공(`true`)일 때만 dirty 기준선(ref)을 갱신한다 — 실패 시 갱신하면 에러가 난 상태에서도 이탈 확인이 꺼져버린다.
 - **에러 상태 UI를 자동화로 재현할 때 React Query 기본 `retry:3`을 감안한다.** `new QueryClient()`를 옵션 없이 쓰면 쿼리가 실패해도 최대 3회까지 자동 재시도하므로, 네트워크 요청을 1회만 실패시키는 테스트는 사용자에게 에러가 보이지 않고 조용히 성공한다(이것 자체는 견고함의 증거이지 버그가 아니다). `ErrorState` 렌더를 실제로 확인하려면 최소 4회 연속 실패를 유도해야 한다.
+
+### 7.13 Phase 9에서 확정된 규칙
+
+- **`useMutation`의 `scope` 옵션은 훅이 호출되는 시점에 고정되는 정적 값이다.** `mutate()` 호출마다 바뀌는 게 아니라 그 훅 인스턴스가 생성될 때 한 번 정해진다. 그래서 "같은 항목의 연속 요청만 직렬화하고 다른 항목끼리는 병렬 유지"하려면 `todo id`별로 **서로 다른 훅 인스턴스**가 필요하다 — 페이지에서 `useToggleTodo()`를 한 번만 호출해 모든 항목이 공유하던 기존 구조로는 애초에 항목별 `scope`를 줄 수 없다. React가 리스트 렌더링(`todos.map(...)`)마다 별도 컴포넌트 인스턴스를 만든다는 성질을 이용해, 훅 호출 위치를 페이지에서 `TodoItem` 내부로 옮기는 것이 유일한 해법이다. 반대로 `useDeleteTodo`처럼 항목별 직렬화가 필요 없는 mutation은 페이지 레벨 공유 훅으로 남겨둔다 — 두 훅의 호출 위치가 다른 것은 의도된 비대칭이다.
+- **Motion의 `spring`·`inertia` 타입 애니메이션은 keyframe을 2개까지만 지원한다.** `animate={{ scale: [1, 1.15, 1] }}`처럼 3개 이상의 keyframe을 spring에 넘기면 `tsc`·`eslint`는 통과하지만 **브라우저 런타임에서 "Only two keyframes currently supported with spring and inertia animations" 예외**가 발생한다(콘솔에서만 드러나며 화면은 깨지지 않고 조용히 실패한다). "1.15로 튀었다가 1로 돌아오는" 펄스 효과가 필요하면, `key`를 변화가 일어나는 값(예: `${id}-${completed}`)에 연동해 매번 리마운트시키고 `initial={{scale:1.15}} → animate={{scale:1}}`의 2-keyframe으로 구현한다. `tween`(시간 기반 보간)은 임의 개수의 keyframe을 허용하지만 `spring`(물리 시뮬레이션)은 시작점→목표점 2점 모델이 본질이라는 라이브러리 제약이며, 문서를 미리 읽지 않으면 실행 전에는 알 수 없다.
+- **체크박스의 `disabled={mutation.isPending}` 가드가 연타 방지의 1차 방어선이다.** 정상적인 사용자 클릭 속도로는 첫 클릭 이후 React 리렌더가 반영되기 전에 두 번째 클릭이 들어오는 일이 거의 없어, `scope` 직렬화가 실제로 여러 요청을 큐잉하는 상황 자체가 육안 조작으로는 재현되지 않는다. 이 방어선이 실제로 동작하는지(그리고 그 아래 깔린 `scope` 직렬화가 진짜 효과가 있는지) 검증하려면 `window.fetch`를 패치해 응답 지연을 인위적으로 주고, **`await` 없는 동일 JS 틱 안에서 여러 번 `.click()`을 호출**해 브라우저의 disabled 반영 지연(비동기 리렌더) 틈을 인위적으로 벌려야 한다.
+- **자동화 스크립트에서 `performance.now()` 타임스탬프 사이의 큰 간격을, 앱 내부의 지연으로 오독하지 않는다.** 여러 `javascript_tool` 호출에 걸쳐 있는 스크립트라면, 그 사이에는 모델이 다음 명령을 구성하는 실제 wall-clock 시간이 그대로 낀다 — 브라우저의 `performance.now()`는 그 시간까지 정직하게 셈에 넣는다. 짧은 간격 안의 요청들(예: 같은 스크립트 실행 안에서 연속 발생한 이벤트)만 "즉각적"이라고 해석하고, 별도의 도구 호출 사이에 걸친 큰 시간차는 도구 호출 리듬의 산물일 수 있음을 감안한다.
 
 ---
 
