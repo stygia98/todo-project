@@ -1,6 +1,6 @@
 # ROADMAP — Todo List 프로젝트
 
-> **버전** 2.2 · **최종 수정** 2026-09-01
+> **버전** 2.3 · **최종 수정** 2026-09-02
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -16,7 +16,7 @@
 | 2 | 도메인 & DB | backend | ✅ |
 | 3 | 인증 (로컬) + 인증 테스트 | backend | ✅ |
 | 4 | Todo API + Todo 테스트 | backend | ✅ |
-| 5 | 구글 OAuth2 + OAuth 테스트 | backend | ⬜ |
+| 5 | 구글 OAuth2 + OAuth 테스트 | backend | ✅ |
 | 6 | 프론트 스캐폴딩 | frontend | 🟡 |
 | 7 | 인증 화면 | frontend | ⬜ |
 | 8 | Todo 화면 | frontend | ⬜ |
@@ -437,11 +437,55 @@
 동일 이메일의 로컬 계정이 있으면 **거부한다.** 자동 연동하지 않고, 별도 계정도 만들지 않는다. 상세는 `CLAUDE.md` 6장.
 
 **DoD**
-- [ ] 구글 로그인 후 JWT를 담은 302 리다이렉트 발생
-- [ ] 신규 사용자가 `provider=GOOGLE`, nickname이 채워진 상태로 저장됨
-- [ ] 재로그인 시 중복 계정이 생기지 않음
-- [ ] 동일 이메일 로컬 계정 존재 시 `error=email_conflict`로 302 리다이렉트
-- [ ] **OAuth 서비스 단위 테스트 1건 통과**
+- [x] 구글 로그인 후 JWT를 담은 302 리다이렉트 발생
+- [x] 신규 사용자가 `provider=GOOGLE`, nickname이 채워진 상태로 저장됨
+- [x] 재로그인 시 중복 계정이 생기지 않음
+- [x] 동일 이메일 로컬 계정 존재 시 `error=email_conflict`로 302 리다이렉트
+- [x] **OAuth 서비스 단위 테스트 1건 통과**
+
+> **검증 기록 (2026-09-02)** — 5항목 전부 통과. 근거는 이번 검증 세션의 실제 브라우저 조작·`psql`
+> 조회·명령 출력이다.
+>
+> 판정 경로는 둘이다. **라이브 경로**는 실제 구글 계정으로 `claude-in-chrome`을 통해 로그인 흐름 전체를
+> 브라우저에서 수행하고 `psql`로 결과 행을 직접 조회했다(AskUserQuestion으로 "라이브 브라우저 검증"과
+> "단위 테스트+코드 검토로 대체" 중 선택을 받아 전자를 택함). **테스트 경로**는 `DB_PASSWORD`·
+> `DB_USERNAME`·`JWT_SECRET`을 `.env`에 채운 뒤 `./mvnw clean test`(**exit 0**, `Tests run: 63`:
+> `AuthControllerTest` 12 + `TodoControllerTest` 21 + `TodoRepositoryTest` 11 + `TodoServiceTest` 8 +
+> `UserRepositoryTest` 5 + `CustomOAuth2UserServiceTest` 5 + `contextLoads` 1)이다.
+>
+> | DoD | 근거 |
+> |---|---|
+> | JWT 담은 302 리다이렉트 | 구글 로그인 완료 후 브라우저가 `http://localhost:3000/oauth/callback?token=`으로 실제 이동함을 화면에서 확인 |
+> | 신규 GOOGLE 가입 | `psql`: `id=3, provider='GOOGLE', nickname='...', password IS NULL` |
+> | 재로그인 시 중복 없음 | 같은 계정으로 재로그인 후 `psql`: 동일 이메일 행 `count=1` (신규 insert 없음) |
+> | 계정 충돌 시 302 | DoD 2·3 검증에 쓴 GOOGLE 계정을 정리한 뒤 같은 이메일로 로컬 회원가입 → 구글 로그인 재시도 → `http://localhost:3000/login?error=email_conflict`로 리다이렉트, `psql`: 해당 이메일 LOCAL 행만 1건 유지 |
+> | OAuth 서비스 단위 테스트 | `CustomOAuth2UserServiceTest` 5건(신규가입·재로그인무중복·계정충돌·nickname 이메일폴백·nickname 50자 절삭) 전부 통과 |
+>
+> #### 계정 충돌 검증의 순서 문제
+>
+> DoD 4를 검증하려면 로컬 계정이 먼저 있어야 하는데, DoD 2·3 검증 과정에서 같은 이메일로 이미
+> GOOGLE 계정이 만들어져 있어 로컬 회원가입이 이메일 중복으로 막혔다. `psql DELETE`로 그 GOOGLE
+> 계정(id=3)을 정리한 뒤 `curl`로 로컬 가입(id=4)을 만들고 구글 로그인을 재시도해 충돌을 재현했다.
+> 검증에 쓴 모든 테스트 계정은 확인 후 `psql DELETE`로 정리했다.
+>
+> #### `.env` 보완 경위
+>
+> 검증 착수 시 `.env`의 `DB_USERNAME`·`JWT_SECRET`이 비어 있어 서버가 기동하지 않았다
+> (`application-local.yml`의 `${DB_USERNAME}`에 기본값이 없음). `DB_USERNAME`은 기존 PostgreSQL
+> 계정을 확인해 채우는 값이라 사용자가 직접 입력했고(`postgres`), `JWT_SECRET`은 새로 정하는 임의
+> 값이라 `openssl rand -hex 32`로 생성해 채웠다. `.env`가 CRLF 줄바꿈이라 `source`로 그대로 읽으면
+> 값 끝에 `\r`이 섞일 위험이 있어, `while IFS='=' read` 루프에서 `${value%$'\r'}`로 제거한 뒤
+> `export`했다.
+>
+> #### 검증 중 발견한 스펙 위반
+>
+> 없음.
+>
+> #### 정리
+>
+> 서버 종료 시 Phase 3·4의 교훈(`mvnw` 래퍼만 죽고 포크된 JVM이 남을 수 있음)에 따라 `netstat`으로
+> 확인한 실제 JVM PID(22028)를 `taskkill //PID 22028 //F //T`로 직접 종료하고, `netstat`·`tasklist`로
+> 완전한 정리를 재확인했다.
 
 ---
 
