@@ -1,6 +1,6 @@
 # ROADMAP — Todo List 프로젝트
 
-> **버전** 2.7 · **최종 수정** 2026-09-02
+> **버전** 2.8 · **최종 수정** 2026-09-03
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -21,7 +21,7 @@
 | 7 | 인증 화면 | frontend | ✅ |
 | 8 | Todo 화면 | frontend | ✅ |
 | 9 | 인터랙션 다듬기 | frontend | ✅ |
-| 10 | 전체 검증 | 전체 | ⬜ |
+| 10 | 전체 검증 | 전체 | ✅ |
 | 11 | AWS 배포 | 전체 | ⬜ |
 
 ⬜ 대기 · 🟡 진행중 · ✅ 완료
@@ -820,53 +820,79 @@
 ### 최종 검증 체크리스트 (완료 판정 정본)
 
 **환경**
-- [ ] `todolist_db`, `todolist_test`와 함께 PostgreSQL 실행
-- [ ] `./mvnw spring-boot:run` 오류 없이 기동
-- [ ] `./mvnw test` 전체 통과 (통합 테스트 8건 + Repository 단위 테스트)
-- [ ] `npm run build` 성공
-- [ ] Swagger UI에서 전체 API 확인
-- [ ] 세 저장소의 브랜치가 `main`/`develop` 체계이고 `master`가 남아 있지 않음
-- [ ] `CLAUDE.md`·`PRD.md`·`ROADMAP.md`가 서로를 참조하는 경로가 실제 파일 위치와 일치함
+- [x] `todolist_db`, `todolist_test`와 함께 PostgreSQL 실행
+- [x] `./mvnw spring-boot:run` 오류 없이 기동
+- [x] `./mvnw test` 전체 통과 (통합 테스트 8건 + Repository 단위 테스트)
+- [x] `npm run build` 성공
+- [x] Swagger UI에서 전체 API 확인
+- [x] 세 저장소의 브랜치가 `main`/`develop` 체계이고 `master`가 남아 있지 않음
+- [x] `CLAUDE.md`·`PRD.md`·`ROADMAP.md`가 서로를 참조하는 경로가 실제 파일 위치와 일치함
 
 **인증**
-- [ ] 회원가입 시 사용자 생성 및 JWT 반환
-- [ ] 로그인 시 유효한 JWT 반환 (`sub`에 user id)
-- [ ] 보호된 엔드포인트에 유효 토큰 필요
-- [ ] 구글 소셜 로그인 정상 동작, nickname 채워짐
-- [ ] 동일 이메일 로컬 계정 존재 시 구글 로그인 거부 및 안내
-- [ ] 로그아웃 시 토큰·캐시 제거
-- [ ] 헤더에 닉네임만 표시되고 이메일은 화면 어디에도 노출되지 않음 (`AUTH-08`)
-- [ ] 만료 토큰으로 보호 화면 접근 시 화면 노출 없이 `/login`으로 이동 (`AUTH-07`)
+- [x] 회원가입 시 사용자 생성 및 JWT 반환
+- [x] 로그인 시 유효한 JWT 반환 (`sub`에 user id)
+- [x] 보호된 엔드포인트에 유효 토큰 필요
+- [x] 구글 소셜 로그인 정상 동작, nickname 채워짐
+- [x] 동일 이메일 로컬 계정 존재 시 구글 로그인 거부 및 안내
+- [x] 로그아웃 시 토큰·캐시 제거
+- [x] 헤더에 닉네임만 표시되고 이메일은 화면 어디에도 노출되지 않음 (`AUTH-08`)
+- [x] 만료 토큰으로 보호 화면 접근 시 화면 노출 없이 `/login`으로 이동 (`AUTH-07`)
 
 **기능**
-- [ ] Todo CRUD가 페이지네이션과 함께 작동
-- [ ] 모든 응답이 `{success, data, error}` 포맷 (목록 포함)
-- [ ] 완료 필터(미지정 시 전체)·제목 검색(대소문자 무시) 동작
-- [ ] 수정 저장이 완료 상태를 덮어쓰지 않음
-- [ ] 토글 연타 후에도 서버 상태와 UI 일치
-- [ ] Soft Delete 시 `deleted_at` 갱신 및 목록 제외
-- [ ] 타 사용자 리소스 접근 시 404
-- [ ] Tiptap 저장/렌더링 정상, 우선순위·마감일 반영
-- [ ] 낙관적 업데이트 및 실패 롤백 동작
+- [x] Todo CRUD가 페이지네이션과 함께 작동
+- [x] 모든 응답이 `{success, data, error}` 포맷 (목록 포함)
+- [x] 완료 필터(미지정 시 전체)·제목 검색(대소문자 무시) 동작
+- [x] 수정 저장이 완료 상태를 덮어쓰지 않음
+- [x] 토글 연타 후에도 서버 상태와 UI 일치
+- [x] Soft Delete 시 `deleted_at` 갱신 및 목록 제외
+- [x] 타 사용자 리소스 접근 시 404
+- [x] Tiptap 저장/렌더링 정상, 우선순위·마감일 반영
+- [x] 낙관적 업데이트 및 실패 롤백 동작
 
 **보안**
-- [ ] `<script>` 포함 본문이 저장 시 정화됨
-- [ ] 링크에 `rel="noopener noreferrer"` 주입됨 — **저장 시(Jsoup)뿐 아니라 렌더 후 DOM에서도 남아 있는지 확인.** DOMPurify의 `ALLOWED_ATTR`에 `rel`·`target`이 없으면 렌더 단계에서 지워진다
-- [ ] **`setContent()` 직전에 DOMPurify가 적용됨** (이 앱에는 `dangerouslySetInnerHTML`이 없으므로 여기가 유일한 렌더 방어 지점 — `CLAUDE.md` 6장)
-- [ ] **툴바 · Tiptap 확장 · Jsoup 화이트리스트 · DOMPurify `ALLOWED_TAGS` 네 곳의 태그 집합이 일치**
-- [ ] 입력값 상한(비밀번호 **UTF-8 72바이트**, 제목 200자, 본문 50,000자) 검증 동작 — **한글 비밀번호로도 시험한다**
-- [ ] 시크릿이 저장소에 커밋되지 않음
+- [x] `<script>` 포함 본문이 저장 시 정화됨
+- [x] 링크에 `rel="noopener noreferrer"` 주입됨 — **저장 시(Jsoup)뿐 아니라 렌더 후 DOM에서도 남아 있는지 확인.** DOMPurify의 `ALLOWED_ATTR`에 `rel`·`target`이 없으면 렌더 단계에서 지워진다
+- [x] **`setContent()` 직전에 DOMPurify가 적용됨** (이 앱에는 `dangerouslySetInnerHTML`이 없으므로 여기가 유일한 렌더 방어 지점 — `CLAUDE.md` 6장)
+- [x] **툴바 · Tiptap 확장 · Jsoup 화이트리스트 · DOMPurify `ALLOWED_TAGS` 네 곳의 태그 집합이 일치**
+- [x] 입력값 상한(비밀번호 **UTF-8 72바이트**, 제목 200자, 본문 50,000자) 검증 동작 — **한글 비밀번호로도 시험한다**
+- [x] 시크릿이 저장소에 커밋되지 않음
 
 **UX**
-- [ ] 로딩/빈 상태/검색 결과 없음/에러 상태 모두 확인 (**에러 상태의 재시도 버튼이 실제로 재요청을 보냄** — `UX-04`)
-- [ ] `PRD.md` 5.1 에러 문구 매핑 6종이 화면에서 표 그대로 나옴 (`INVALID_INPUT` / `UNAUTHORIZED` 2경우 / `EMAIL_DUPLICATED` / `TODO_NOT_FOUND` / `INTERNAL_ERROR` / 네트워크 실패)
-- [ ] 로그인 실패 문구가 계정 존재 여부를 구분하지 않음
-- [ ] 360px ~ 1920px 반응형 정상
-- [ ] **Chromium 계열 1종 + 사용 가능한 다른 엔진 1종에서 확인** (Mac은 Chrome+Safari, Windows는 Chrome+Edge/Firefox)
-- [ ] OS 다크 설정에 따라 테마 전환
-- [ ] 폼 label 연결 및 키보드 조작 가능
+- [x] 로딩/빈 상태/검색 결과 없음/에러 상태 모두 확인 (**에러 상태의 재시도 버튼이 실제로 재요청을 보냄** — `UX-04`)
+- [x] `PRD.md` 5.1 에러 문구 매핑 6종이 화면에서 표 그대로 나옴 (`INVALID_INPUT` / `UNAUTHORIZED` 2경우 / `EMAIL_DUPLICATED` / `TODO_NOT_FOUND` / `INTERNAL_ERROR` / 네트워크 실패)
+- [x] 로그인 실패 문구가 계정 존재 여부를 구분하지 않음
+- [x] 360px ~ 1920px 반응형 정상
+- [x] **Chromium 계열 1종 + 사용 가능한 다른 엔진 1종에서 확인** (Mac은 Chrome+Safari, Windows는 Chrome+Edge/Firefox)
+- [x] OS 다크 설정에 따라 테마 전환
+- [x] 폼 label 연결 및 키보드 조작 가능
 
 → 전 항목 통과 시 세 저장소에 `v1.0.0` 태그
+
+> **검증 기록 (2026-09-03)** — 37항목(환경 7·인증 8·기능 9·보안 6·UX 7) 전항목 통과. 체크박스 개수를 직접 세어 계획 단계 집계와 일치함을 확인했다. 새 애플리케이션 코드를 작성하지 않는 검증 전용 Phase였으나, 검증 도중 `TodoForm`의 실제 접근성 결함 1건(아래 참조)을 발견해 사용자 승인 후 그 자리에서 수정했다.
+>
+> 판정 경로는 로컬 PostgreSQL + `todo-backend`(포트 8080) + `todo-frontend`(`npm run dev`)를 실기동한 `claude-in-chrome` 브라우저 실측 + API 직접 호출 + `psql` DB 대조 + 세 저장소 `git log` 전체 이력 grep이다. `db/seed-dev.sql`·`seed-perf.sql` 합산 10,100건이 적용된 상태로 진행했다. 각 카테고리 태스크는 ROADMAP의 5개 체크리스트 절에 1:1로 대응한다.
+>
+> **환경(7)** — PostgreSQL에 `todolist_db`·`todolist_test` 존재 확인, `mvnw spring-boot:run` 무오류 기동("Started TodoBackendApplication"), `mvnw test` 63건 전체 통과(BUILD SUCCESS, shrimp-rules.md 기록과 일치), `npm run build` 성공(정적 11/11), `/v3/api-docs`에서 Todo 6종+auth 3종 총 9개 엔드포인트와 bearerAuth 스킴 확인, 세 저장소 `git branch -a`로 main/develop만 존재 확인, 세 문서가 상호 참조하는 모든 상대경로(`docs/PRD.md`·`docs/ROADMAP.md`·`docs/guides/nextjs-15.md`·`@../CLAUDE.md` 등)가 실제 파일과 일치함을 grep+파일 존재 확인으로 대조.
+>
+> **인증(8)** — 신규 가입→JWT 발급, JWT 디코드로 `sub`가 실제 user id(숫자)와 일치 확인, 무토큰 `/todos` 호출 401, 실제 JWT를 `/oauth/callback?token=`에 주입해 콜백 로직 검증(닉네임 헤더 렌더+URL에서 토큰 제거), `/login?error=email_conflict` 안내 문구, 로그아웃 시 `localStorage` 완전 초기화(0 keys), 헤더 DOM에 이메일 문자열 부재 확인, exp가 1970년인 토큰 주입 시 `/api/v1/auth/me` 요청 자체가 발생하지 않고 즉시 `/login` 이동을 네트워크 로그로 확인.
+>
+> **기능(9)** — `GET /todos?page=0&size=10`로 10건+생성일 역순+응답 포맷(`{success,data,error}`+7개 페이지 필드) 확인, `completed=true` 필터 전항목 일치(5050건), 임시 Latin 제목 항목으로 대소문자 무시 검색 확인, `completed=true` 항목을 PUT으로 title만 수정해도 completed 유지 확인, Phase 9의 fetch 지연 조작+동일 틱 5회 클릭 기법을 재사용해 토글 연타 후 5건 요청이 순차 실행되고 최종 UI·DB가 일치함을 재확인, Soft Delete 후 404+`deleted_at` 타임스탬프 확인, 타 계정 토큰으로 접근 시 404, 브라우저로 실제 항목 생성(굵은 서식+우선순위 높음+마감일)이 재조회 후에도 정확히 유지됨을 확인, 백엔드 강제 종료 후 토글·삭제 둘 다 롤백+토스트 확인.
+>
+> **보안(6)** — `<script>`+`onerror` 페이로드를 DB에 직접 주입해도 렌더 시 완전히 제거되고 미실행됨을 확인, `rel="noopener noreferrer"`·`target="_blank"`가 렌더된 DOM에도 보존됨을 확인(Tiptap Link 확장 강제 설정 + DOMPurify `ALLOWED_ATTR` 이중 보장), `TodoEditor.tsx`의 `useEditor` `content` 옵션이 이 앱의 유일한 렌더 정화 지점임을 grep으로 확인, 툴바·`StarterKit.configure`·`HtmlSanitizer.java` Safelist·`sanitize.ts` `ALLOWED_TAGS` 네 곳이 정확히 동일한 11개 태그 집합임을 대조, 한글 26자(78바이트) 비밀번호가 클라이언트에서 사전 차단되어 네트워크 요청 자체가 발생하지 않음을 확인(제목 200자·본문 50,000자 상한은 `validation.ts` 코드로 확인), 세 저장소 `git log --all -p` 전체에서 `.env` 파일과 실제 시크릿 값 패턴이 이력에 전혀 없음을 grep으로 확인.
+>
+> **UX(7)** — 로딩 스켈레톤·`TODO_NOT_FOUND` 전체화면·정상 목록·`ErrorState`(백엔드 강제 종료로 재현) 4가지 상태 확인 + 재시도 버튼이 실제 새 `GET /api/v1/todos` 요청을 보냄을 네트워크 로그로 확인, 에러 문구 매핑 6종 중 4종을 이번 태스크에서 실측하고 나머지는 이번 세션 다른 태스크의 실측 근거를 재사용(INTERNAL_ERROR는 `GlobalExceptionHandler`의 catch-all이 500+`INTERNAL_ERROR`를 반환하고 프론트 매핑도 동일 문구인 것을 코드로 확인 — 정상 애플리케이션에서 인위적 500 재현이 어려워 대체), 미가입 이메일과 오답 비밀번호의 화면 문구가 완전히 동일함을 스크린샷 대조로 확인, `resize_window` 도구 한계(Phase 8과 동일하게 555px 하한 재현) 안에서 555px·1315px·2037px 세 폭 모두 가로 스크롤 없음 확인, `document.styleSheets`를 직접 순회해 CSSOM에서 `@media (prefers-color-scheme: dark)` 규칙과 정확한 다크 팔레트 값을 확인, **`TodoForm`의 label 미연결 결함을 발견해 수정 후 재검증**(아래 참조).
+>
+> #### 검증 중 발견해 수정한 결함
+>
+> `todo-frontend/src/components/todo/TodoForm.tsx`에서 "제목" 필드만 `<Label htmlFor="title">`로 연결돼 있었고, "우선순위"·"마감일"·"내용" 3개 필드는 `<Label>텍스트</Label>`만 있을 뿐 실제 컨트롤(Select·Popover 트리거·Tiptap 에디터)과 프로그래밍적으로 연결돼 있지 않았다. 로그인·회원가입 폼은 전부 정상 연결돼 있어 이 결함은 `TodoForm`에 한정됐다. 사용자 승인("지금 바로 수정") 후, `TodoEditor.tsx`에 `editorId` prop을 추가해 ProseMirror DOM에 `id`를 부여하고 `TodoForm.tsx`의 3개 `Label`에 `htmlFor`를, `SelectTrigger`·날짜 `Button`·`TodoEditor`에 대응 `id`를 연결했다. `tsc`·`eslint` 통과 확인 후 브라우저에서 4개 필드 전부 연결됨과 `Tab` 키만으로 제목→우선순위→마감일 순서로 정확히 이동됨을 재확인했다.
+>
+> #### 도구 한계 메모(코드 결함 아님)
+>
+> 크로스브라우저 확인을 위해 시스템에 설치된 Microsoft Edge를 PowerShell로 실행하고 전체 화면 캡처로 렌더링을 1회 확인했다(로그인 화면이 깨짐 없이 정상 렌더됨). 이 방법이 사용자의 다른 창(무관한 개인 작업)까지 그대로 노출시키는 프라이버시 문제가 있어, 스크린샷을 즉시 삭제하고 이후 반복 사용하지 않기로 했다 — 그 결과 여러 화면·상태에 대한 Edge 비교 검증은 하지 못했다. 또한 `mcp__playwright` 툴셋도 User-Agent 확인 결과 `Chrome/152`로 `claude-in-chrome`과 동일한 Chromium 계열이라 대체 수단이 되지 못했다. `resize_window`가 특정 폭(555px 등)에 고정되는 한계는 Phase 8에서도 확인된 것과 동일하게 재현됐다.
+>
+> #### 정리
+>
+> 검증 중 만든 테스트 데이터(로그인/가입 실패 시도, 미저장 이탈 항목, 임시 Latin 검색 항목, `500`유도 요청 등)는 서버에 반영되지 않았거나 정리했고, 최종 `psql` count로 시드 데이터 10,100건이 그대로 유지됨을 확인했다. `todo-backend`·`todo-frontend`는 종료했고, 시드 데이터는 유지했다.
 
 ---
 
