@@ -516,7 +516,7 @@ Tiptap이 생성한 HTML을 저장하고 렌더링하는 구조이므로 **양�
 
 허용 태그 (Tiptap 툴바와 1:1로 맞춘다):
 ```
-p, br, strong, em, h2, h3, ul, ol, li, a, code, pre, blockquote
+p, br, strong, em, ul, ol, li, a, code, pre
 ```
 - `a`는 `href`만 허용하고, **`rel="noopener noreferrer"`와 `target="_blank"`를 정화 단계에서 강제 주입**한다 (tabnabbing 방지).
 - `href`는 `http`, `https`, `mailto` 스킴만 허용한다. `javascript:` 차단.
@@ -546,7 +546,7 @@ editor.commands.setContent(sanitizeHtml(todo.content));
 
 ```ts
 DOMPurify.sanitize(html, {
-  ALLOWED_TAGS: ["p","br","strong","em","h2","h3","ul","ol","li","a","code","pre","blockquote"],
+  ALLOWED_TAGS: ["p","br","strong","em","ul","ol","li","a","code","pre"],
   ALLOWED_ATTR: ["href", "target", "rel"],   // target·rel을 빼면 서버가 주입한 값이 렌더에서 지워진다
 });
 ```
@@ -604,7 +604,7 @@ DOMPurify.sanitize(html, {
 
 ### Tiptap 설정 (정화 화이트리스트와 일치시킬 것)
 
-**툴바**: 굵게(`strong`) · 기울임(`em`) · 제목 H2 · 제목 H3 · 불릿 목록 · 번호 목록 · 링크 · 인라인 코드 · 코드 블록 · 인용
+**툴바**: 굵게(`strong`) · 기울임(`em`) · 불릿 목록 · 번호 목록 · 링크 · 인라인 코드 · 코드 블록
 
 #### ⚠️ StarterKit을 기본값으로 쓰지 않는다 (중요)
 
@@ -623,7 +623,8 @@ import StarterKit from "@tiptap/starter-kit";
 
 const extensions = [
   StarterKit.configure({
-    heading: { levels: [2, 3] },   // h1, h4~h6 차단
+    heading: false,                 // 제목 전체 차단 — H2·H3 서식 미지원
+    blockquote: false,              // <blockquote> 차단 — 인용 서식 미지원
     strike: false,                  // <s> 차단
     horizontalRule: false,          // <hr> 차단
     underline: false,               // <u> 차단 — Ctrl+U까지 함께 꺼진다
@@ -636,9 +637,9 @@ const extensions = [
 ];
 ```
 
-> 밑줄(`u`), 취소선(`s`)은 넣지 않는다. **툴바 · Tiptap 확장 · Jsoup 화이트리스트 · DOMPurify 설정 네 곳이 항상 같은 태그 집합을 가리켜야 한다.** 한 곳을 바꾸면 나머지 세 곳도 함께 바꾼다.
+> 밑줄(`u`), 취소선(`s`), 제목(`h2`/`h3`), 인용(`blockquote`)은 넣지 않는다. **툴바 · Tiptap 확장 · Jsoup 화이트리스트 · DOMPurify 설정 네 곳이 항상 같은 태그 집합을 가리켜야 한다.** 한 곳을 바꾸면 나머지 세 곳도 함께 바꾼다.
 >
-> 확인 방법: 에디터 본문에서 **`# `, `~~취소선~~`, `---`, Ctrl+U** 네 가지를 모두 시도해 아무 서식도 생성되지 않아야 한다.
+> 확인 방법: 에디터 본문에서 **`# `/`## `/`### `, `~~취소선~~`, `---`, `> `, Ctrl+U** 다섯 가지를 모두 시도해 아무 서식도 생성되지 않아야 한다.
 
 ### 인터랙션 (Motion)
 
