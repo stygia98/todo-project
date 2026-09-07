@@ -1,6 +1,6 @@
 # Todo List 프로젝트 개발 가이드
 
-> **버전** 1.10 · **최종 수정** 2026-09-01
+> **버전** 1.11 · **최종 수정** 2026-09-07
 > 이 문서는 **기술 규칙의 단일 기준(Single Source of Truth)**이다.
 > 코드 생성 전 반드시 이 문서를 확인하고, 문서와 충돌하는 구현을 하지 않는다.
 > 문서에 없는 결정이 필요하면 임의로 진행하지 말고 먼저 질문한다.
@@ -138,15 +138,15 @@ Claude Code는 현재 디렉토리에서 **상위 디렉토리로 거슬러 올�
 | 서버 상태 | React Query (TanStack Query v5) |
 | 폼 | **라이브러리를 쓰지 않는다** — `useState` + 수동 검증 (아래 ⚠️ 참조) |
 | 애니메이션 | **Motion** (`motion` 패키지, 구 framer-motion) |
-| 에디터 | Tiptap |
+| 에디터 | Tiptap, **`@tiptap/extension-image`**(`@tiptap/react`와 동일 버전) |
 | 토스트 | **shadcn/ui `sonner`** |
 | 날짜 | **date-fns** (shadcn Calendar 의존) |
 | HTML 정화 | **DOMPurify** |
 
 ### 인프라
-AWS Amplify(프론트), EC2(백엔드), RDS(PostgreSQL) · Git/GitHub
+AWS Amplify(프론트), EC2(백엔드), RDS(PostgreSQL), **S3**(첨부 이미지, Phase 14부터) · Git/GitHub
 
-> **S3는 MVP 범위에서 제외한다.** 파일 첨부가 비목표이므로 사용처가 없다. 프론트 정적 자산은 Amplify가 처리한다.
+> 첨부 이미지는 Phase 12~13에서 로컬 파일시스템으로 먼저 완성·검증한 뒤, Phase 14에서 S3로 전환한다. 프론트 정적 자산은 이 절과 무관하게 Amplify가 처리한다.
 
 ### ⚠️ 버전 관련 확정 사항
 
@@ -172,7 +172,7 @@ AWS Amplify(프론트), EC2(백엔드), RDS(PostgreSQL) · Git/GitHub
 - **`public/static` 경로를 만들지 않는다.** Amplify가 배포용으로 예약한 경로다. 정적 파일은 `public/` 바로 아래나 `public/assets/`에 둔다.
 - **한 앱에서 SSR 브랜치와 SSG 브랜치를 섞어 배포할 수 없다.** `main`과 `develop` 모두 동일한 렌더링 방식이어야 한다. 이 프로젝트는 전부 SSR/CSR 혼합(`next build`)으로 통일한다.
 - 빌드 출력 디렉토리는 `.next`여야 한다. `next.config.js`에 `distDir`을 설정하지 않는다.
-- `next/image` 사용 시 이미지 응답 크기 제한이 있다. 이 프로젝트는 이미지 업로드가 비목표이므로 해당 없음.
+- `next/image` 사용 시 이미지 응답 크기 제한이 있다. 이 프로젝트는 Tiptap 본문에 순수 `<img>` 태그만 쓰고 `next/image`를 도입하지 않으므로(첨부 이미지 조회 URL은 만료성 서명 토큰을 포함해 정적 최적화 대상이 아니다) 해당 없음.
 
 ---
 
@@ -210,6 +210,31 @@ DB 스키마명: **`todolist_db`** (소문자) · 테스트: **`todolist_test`**
 | deleted_at | TIMESTAMP | NULL (Soft Delete) |
 
 **인덱스**: `idx_todos_user_deleted` on `(user_id, deleted_at)`
+
+### attachments
+
+| 컬럼 | 타입 | 제약 |
+|---|---|---|
+| id | BIGSERIAL | PK |
+| todo_id | BIGINT | FK → todos.id, **NULL 허용** |
+| user_id | BIGINT | FK → users.id, NOT NULL (업로더, 소유권 검증용) |
+| storage_type | VARCHAR(20) | NOT NULL, `LOCAL` / `S3` |
+| storage_key | VARCHAR(512) | NOT NULL, UNIQUE (로컬 상대경로 또는 S3 객체 키) |
+| original_filename | VARCHAR(255) | NOT NULL |
+| content_type | VARCHAR(100) | NOT NULL (검증된 값만 저장) |
+| file_size | BIGINT | NOT NULL (bytes. presign 시점은 클라이언트 주장값, complete 시점에 실측값으로 갱신) |
+| status | VARCHAR(20) | NOT NULL, `TEMP` / `LINKED` |
+| created_at | TIMESTAMP | NOT NULL |
+| updated_at | TIMESTAMP | NOT NULL |
+| deleted_at | TIMESTAMP | NULL (Soft Delete) |
+
+**인덱스**: `(todo_id, deleted_at)`, `(status, created_at)`(고아 파일 정리 배치용)
+
+**저장 키 규칙**: `todos/{userId}/{yyyy}/{MM}/{uuid}.{ext}`(로컬·S3 동일). 확장자는 **파일명이 아니라 검증된 `content_type`에서 유도**한다. 파일명을 믿으면 `.php.jpg` 같은 이중 확장자와 경로 조작이 들어온다.
+
+> **`todo_id`를 NULL 허용으로 두는 이유** — 에디터에서는 할 일을 저장하기 *전에* 이미지가 먼저 업로드된다. 업로드 시점에는 `status=TEMP`, `todo_id=NULL`로 만들고, 할 일 저장/수정 시 본문에 실제로 남아 있는 첨부만 `LINKED`로 전환하며 `todo_id`를 채운다.
+>
+> **`storage_type`을 두는 이유** — 로컬에서 만든 데이터와 S3 전환 이후 데이터가 섞여도 각각 올바른 방식으로 조회하기 위함이다. `LocalStorageService`는 S3 전환 후에도 항상 등록해 과거 `LOCAL` 레코드를 계속 조회할 수 있게 한다(`StorageServiceResolver`).
 
 ### 입력값 제약 (DTO 검증과 스키마를 일치시킬 것)
 
@@ -283,6 +308,7 @@ private User user;
 4. DDL 스크립트를 `todo-backend/src/main/resources/db/schema.sql`에 커밋해 이력을 남긴다.
 
 > 스키마 변경이 잦아지면 그때 Flyway를 도입한다. MVP에서는 도입하지 않는다.
+> **Phase 12에서 `attachments` 테이블이 추가되면 이 절차를 한 번 더 밟는다.** Flyway가 없으므로 신규 테이블도 예외 없이 DDL 추출 → RDS 수동 적용 → `schema.sql` 갱신 순서를 따른다.
 
 ---
 
@@ -384,6 +410,23 @@ Spring의 `Page` 객체를 그대로 반환하지 않고 `PageResponse<T>` DTO�
 
 토큰은 유효한데 해당 사용자가 조회되지 않는 경우(토큰 발급 후 계정이 사라진 상황)는 **404가 아니라 401 `UNAUTHORIZED`**로 응답한다. 프론트는 401을 자동 로그아웃으로 처리하므로 일관된다.
 
+### 첨부 (Attachment)
+
+| Method | Endpoint | 설명 | 비고 |
+|---|---|---|---|
+| POST | `/api/v1/attachments/presign` | 업로드 URL 발급 | |
+| PUT | `/api/v1/attachments/{id}/upload` | 파일 수신 | **로컬 전용** |
+| POST | `/api/v1/attachments/{id}/complete` | 업로드 완료 확정 (매직바이트 검증) | |
+| GET | `/api/v1/attachments/{id}/url` | 조회용 URL 재발급 | |
+| GET | `/api/v1/attachments/{id}/raw` | 파일 스트림 | **로컬 전용, `ApiResponse` 봉투 예외** |
+| DELETE | `/api/v1/attachments/{id}` | Soft Delete | |
+
+`/raw`를 제외한 전부 `ApiResponse<T>` 봉투를 쓰고 기존 `TodoController`와 동일하게 `@AuthenticationPrincipal User user`로 인증 주체를 받는다. 소유권 불일치는 403이 아니라 **404**(`TodoService`와 동일 정책 — 존재 여부 비노출).
+
+> **`GET /api/v1/attachments/{id}/raw`는 `ApiResponse` 봉투를 쓰지 않는다.** 바이너리를 직접 반환하기 때문이며, **OAuth2 302 리다이렉트와 나란히 "모든 REST 응답에 봉투 적용" 원칙의 예외**다. 인가도 이 컨트롤러가 직접 수행하는 이 프로젝트 유일의 경로이고(6장 참조), 실패 시에도 JSON이 아니라 상태코드(401/404)만 반환한다.
+
+`TodoResponse`에는 `attachments: List<AttachmentView(id, viewUrl)>` 필드가 포함된다. 저장 시점에 이미 `todo_id`로 연결돼 있으므로 목록/단건 조회에서 함께 내려주며, **별도의 일괄 조회 엔드포인트는 두지 않는다**(본문 캐시와 URL 캐시가 따로 만료되는 상태를 피하기 위함).
+
 ---
 
 ## 6. 인증 설계
@@ -396,13 +439,24 @@ Spring의 `Page` 객체를 그대로 반환하지 않고 `PageResponse<T>` DTO�
 
 ### JWT 클레임 구성
 ```
-sub    : user.id (숫자 문자열)
-email  : user.email
-iat    : 발급 시각
-exp    : 발급 + 24시간
+sub     : user.id (숫자 문자열)
+email   : user.email
+purpose : "access"
+iat     : 발급 시각
+exp     : 발급 + 24시간
 ```
 - **`sub`는 이메일이 아니라 id를 담는다.** 이메일 변경 기능이 없어도 id 기반이 조회에 유리하고, 인증 필터에서 PK 조회로 끝난다.
 - `JwtAuthenticationFilter`는 `sub`를 파싱해 사용자 id를 얻고, `deleted_at IS NULL` 조건으로 조회한다.
+
+#### ⚠️ `purpose` 클레임으로 토큰 용도를 분리한다 (중요, Phase 12부터)
+
+첨부 이미지 조회용 **뷰 토큰**(`AttachmentTokenProvider` 발급, `purpose="attachment-view"` + `aid=첨부id`, 24시간 만료)은 액세스 토큰과 **같은 `SecretKey`/HS256으로 서명한다.** 그러면 뷰 토큰도 서명 검증 자체는 통과하므로, `purpose` 검사 없이 `sub`만 읽는 현재 `JwtAuthenticationFilter`에 뷰 토큰을 `Authorization: Bearer`로 넣으면 **API 전체가 열려버린다**(이미지 URL은 브라우저 주소창·서버 로그·리퍼러에 노출되므로 현실적인 공격 경로다).
+
+양방향을 모두 막는다.
+1. 액세스 토큰 발급에 `claim("purpose","access")`를 추가하고, `JwtAuthenticationFilter`는 **`purpose=="access"`인 토큰만** 인증에 사용한다.
+2. 첨부 조회(`GET /api/v1/attachments/{id}/raw`)는 **`purpose=="attachment-view"` 그리고 `aid==경로변수 id`**일 때만 통과시킨다.
+
+뷰 토큰의 만료는 30분이 아니라 **액세스 토큰과 동일한 24시간**으로 둔다. 상세 화면을 열어둔 채 짧은 시간 안에 URL이 만료되면 "캐시된 본문 + 만료된 URL" 조합이 생겨 에디터를 재마운트해야 하고, 이는 편집 중이던 입력을 날린다.
 
 ### SecurityConfig 인가 경로 (필수)
 
@@ -415,11 +469,13 @@ permitAll:
   /swagger-ui/**
   /v3/api-docs/**
   /error
+  /api/v1/attachments/*/raw   # Phase 12부터 — 인가는 컨트롤러가 직접 수행 (아래 참조)
 
 그 외: authenticated
 ```
 
 > ⚠️ **Swagger 경로를 빼먹으면 Phase 3에서 Swagger UI가 막힌다.** Phase 1의 DoD("Swagger 접속 확인")가 조용히 회귀하므로 SecurityConfig 작성 시 반드시 함께 넣는다.
+> ⚠️ **`/api/v1/attachments/*/raw`를 `authenticated()`로 두면 `JwtAuthenticationEntryPoint`가 먼저 401을 내서 컨트롤러에 도달하지 못한다.** 이 경로는 `Authorization` 헤더가 아니라 쿼리의 뷰 토큰으로 인가하므로(위 `purpose` 절 참조), **이 프로젝트에서 컨트롤러가 인가를 직접 수행하는 유일한 예외**다.
 
 #### ⚠️ CSRF 비활성화와 STATELESS 세션은 필수다 (중요)
 
@@ -516,13 +572,17 @@ Tiptap이 생성한 HTML을 저장하고 렌더링하는 구조이므로 **양�
 
 허용 태그 (Tiptap 툴바와 1:1로 맞춘다):
 ```
-p, br, strong, em, ul, ol, li, a, code, pre
+p, br, strong, em, ul, ol, li, a, code, pre, img
 ```
 - `a`는 `href`만 허용하고, **`rel="noopener noreferrer"`와 `target="_blank"`를 정화 단계에서 강제 주입**한다 (tabnabbing 방지).
 - `href`는 `http`, `https`, `mailto` 스킴만 허용한다. `javascript:` 차단.
 - `script`, `iframe`, `style` 태그와 모든 `on*` 속성, `style` 속성은 제거한다.
 - 직접 정규식으로 구현하지 않는다. Jsoup Safelist를 사용한다.
 - **`Jsoup.clean(html, "", safelist, outputSettings)` 오버로드를 쓰고 `new Document.OutputSettings().prettyPrint(false)`를 넘긴다.** 기본 pretty-print가 블록 요소를 재포맷해 **코드 블록(`pre`)의 공백과 줄바꿈이 망가진다.**
+
+#### ⚠️ `img`는 `data-attachment-id`·`alt`만 허용하고 `src`는 절대 허용하지 않는다 (중요, Phase 12부터)
+
+첨부 이미지의 조회 URL(`viewUrl`)은 만료되는 서명 토큰을 포함하는 **표시 전용** 값이라, 저장할 **정본(canonical) HTML에는 절대 남아서는 안 된다.** Jsoup Safelist에는 `addAttributes("img", "data-attachment-id", "alt")`만 등록하고 `addProtocols("img", "src", ...)`는 호출하지 않는다 — Safelist는 화이트리스트이므로 미등록 속성은 값과 무관하게 제거되며, 이것이 저장 시점의 최종 방어선이다. `src`는 프론트가 화면에 표시할 때만 `injectViewUrls()`(Phase 13)로 별도 주입하는 **표시 전용** 속성이다.
 
 **렌더 시 (프론트)** — `lib/sanitize.ts`에서 DOMPurify로 한 번 더 정화한다. 서버를 신뢰하더라도 이중 방어를 유지한다.
 
@@ -545,13 +605,21 @@ editor.commands.setContent(sanitizeHtml(todo.content));
 네 번째 방어선의 설정을 명시하지 않으면 "네 곳이 같은 태그 집합"이라는 규칙 자체를 검증할 수 없다. DOMPurify 기본값은 Jsoup 목록보다 훨씬 넓으므로(`img`, `table`, `u`, `h1` 등) **반드시 명시적으로 좁힌다.**
 
 ```ts
+// 저장·비교용 (sanitizeHtml) — src를 포함하지 않는다. 정본 HTML과 대응한다.
 DOMPurify.sanitize(html, {
-  ALLOWED_TAGS: ["p","br","strong","em","ul","ol","li","a","code","pre"],
-  ALLOWED_ATTR: ["href", "target", "rel"],   // target·rel을 빼면 서버가 주입한 값이 렌더에서 지워진다
+  ALLOWED_TAGS: ["p","br","strong","em","ul","ol","li","a","code","pre","img"],
+  ALLOWED_ATTR: ["href", "target", "rel", "alt", "data-attachment-id"],
+});
+
+// 표시용 (sanitizeHtmlForDisplay, Phase 13) — 에디터에 주입하기 직전에만 쓴다. src를 포함한다.
+DOMPurify.sanitize(html, {
+  ALLOWED_TAGS: ["p","br","strong","em","ul","ol","li","a","code","pre","img"],
+  ALLOWED_ATTR: ["href", "target", "rel", "alt", "data-attachment-id", "src"],
 });
 ```
 
 > ⚠️ `ALLOWED_ATTR`에서 `target`·`rel`을 빠뜨리면, 백엔드가 강제 주입한 `rel="noopener noreferrer"`가 **렌더 단계에서 제거되어 tabnabbing 방어가 무효화된다.**
+> ⚠️ **`src`는 저장·비교용 함수의 `ALLOWED_ATTR`에 넣지 않는다.** 두 함수는 `src`를 뺀 나머지 태그·속성 집합을 항상 공유해야 하며, 한쪽만 바꾸면 정본과 화면 표시가 어긋난다.
 
 정화 로직은 통합 테스트로 검증한다.
 
@@ -604,7 +672,7 @@ DOMPurify.sanitize(html, {
 
 ### Tiptap 설정 (정화 화이트리스트와 일치시킬 것)
 
-**툴바**: 굵게(`strong`) · 기울임(`em`) · 불릿 목록 · 번호 목록 · 링크 · 인라인 코드 · 코드 블록
+**툴바**: 굵게(`strong`) · 기울임(`em`) · 불릿 목록 · 번호 목록 · 링크 · 인라인 코드 · 코드 블록 · **이미지**(Phase 13부터)
 
 #### ⚠️ StarterKit을 기본값으로 쓰지 않는다 (중요)
 
@@ -640,6 +708,22 @@ const extensions = [
 > 밑줄(`u`), 취소선(`s`), 제목(`h2`/`h3`), 인용(`blockquote`)은 넣지 않는다. **툴바 · Tiptap 확장 · Jsoup 화이트리스트 · DOMPurify 설정 네 곳이 항상 같은 태그 집합을 가리켜야 한다.** 한 곳을 바꾸면 나머지 세 곳도 함께 바꾼다.
 >
 > 확인 방법: 에디터 본문에서 **`# `/`## `/`### `, `~~취소선~~`, `---`, `> `, Ctrl+U** 다섯 가지를 모두 시도해 아무 서식도 생성되지 않아야 한다.
+
+#### ⚠️ 이미지는 StarterKit이 아니라 `@tiptap/extension-image` 기반 커스텀 노드다 (중요, Phase 13부터)
+
+`@tiptap/extension-image`를 설치하되 기본 `Image`를 그대로 쓰지 않고 `Image.extend()`로 만든 `AttachmentImage` 커스텀 노드를 쓴다.
+
+- **`parseHTML()`을 `img[data-attachment-id]`로 오버라이드한다.** 정본으로 저장되는 HTML에는 `src`가 없으므로(6장 참조), 기본 `Image`의 `img[src]` 매칭 규칙을 그대로 쓰면 재진입 시 이미지 노드 자체가 파싱되지 않아 사라진다.
+- **`addInputRules()`를 빈 배열로 오버라이드한다.** 기본 입력 규칙은 마크다운 `![alt](url)`을 감지해 `attachmentId` 없는 이미지 노드를 만들어버린다 — 위에서 경계한 "서식 무음 소실"과 같은 종류의 함정이다.
+
+```ts
+extensions: [
+  StarterKit.configure({ /* 기존 설정 그대로 */ }),
+  AttachmentImage,   // src/components/todo/AttachmentImage.ts
+]
+```
+
+이미지도 예외가 아니다 — **툴바 · Tiptap 확장 · Jsoup 화이트리스트 · DOMPurify 설정 네 곳이 `img`에 대해서도 항상 같은 태그·속성 집합을 가리켜야 한다.**
 
 ### 인터랙션 (Motion)
 

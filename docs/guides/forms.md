@@ -311,7 +311,7 @@ const editor = useEditor({
 | **Server Actions** (`"use server"`) | API가 별도 Spring 서버다. 폼 제출은 `apiClient`로 REST를 호출한다 |
 | `useFormStatus` / `useActionState` | 위와 같다. Server Actions 전제 훅이다 |
 | **CSRF 토큰** | `Authorization: Bearer` 헤더 인증이라 CSRF 경로가 없다. 백엔드도 `csrf.disable()` 상태다 |
-| **파일 업로드 폼** | 파일 첨부가 **비목표**다 (`PRD.md` 1장) |
+| **별도의 파일 업로드 폼 필드** | 이미지 첨부(`ATT-01`)는 `TodoForm`의 폼 필드가 아니라 **Tiptap 에디터 내부**(툴바 버튼·붙여넣기·드래그앤드롭)에서 처리한다. `<input type="file">`을 두는 일반적인 폼 업로드 UI는 두지 않는다 |
 | **자동 저장** | `TODO-10`이 명시적 저장을 요구한다 |
 | **다단계 폼** | 해당 화면이 없다 |
 

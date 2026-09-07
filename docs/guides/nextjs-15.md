@@ -378,7 +378,7 @@ export default [...compat.extends("next/core-web-vitals", "next/typescript")];
 | ISR · `revalidateTag` · `fetch` 캐시 옵션 | 서버 페칭이 없다. 캐시는 React Query가 담당한다 |
 | `experimental.typedRoutes` | 라우트가 6개뿐이라 실익이 없다. 스펙에 없는 설정을 켜지 않는다 |
 | `after()` | 서버 실행 경로가 없다 |
-| `next/image` 최적화 | 이미지 업로드가 **비목표**다 (`PRD.md` 1장) |
+| `next/image` 최적화 | Tiptap 본문은 순수 `<img>` 태그만 쓴다. 첨부 이미지의 조회 URL은 만료되는 서명 토큰을 포함하는 동적 값이라 정적 최적화 대상이 아니다 (`CLAUDE.md` 3장·8장) |
 
 ### `public/static` 경로
 

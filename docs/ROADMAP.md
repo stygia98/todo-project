@@ -1,6 +1,6 @@
 # ROADMAP — Todo List 프로젝트
 
-> **버전** 2.8 · **최종 수정** 2026-09-03
+> **버전** 2.9 · **최종 수정** 2026-09-07
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -23,6 +23,10 @@
 | 9 | 인터랙션 다듬기 | frontend | ✅ |
 | 10 | 전체 검증 | 전체 | ✅ |
 | 11 | AWS 배포 | 전체 | ⬜ |
+| 12-0 | 이미지 첨부 — 문서 개정 (착수 조건) | 문서 | ⬜ |
+| 12 | 이미지 첨부 — 백엔드(로컬 스토리지) | backend | ⬜ |
+| 13 | 이미지 첨부 — 프론트엔드 | frontend | ⬜ |
+| 14 | 이미지 첨부 — S3 전환 + 운영 재검증 | backend + 인프라 | ⬜ |
 
 ⬜ 대기 · 🟡 진행중 · ✅ 완료
 
@@ -104,6 +108,12 @@
 | UX-05 반응형 360~1920 | 6(토큰·컨테이너) · 8 | 8(360px) · 10(1920px) |
 | UX-06 label·키보드 | 7 · 8 | 7 · 8 · 10 |
 | UX-07 다크 토큰 (`prefers-color-scheme`) | 6 | 6 · 10 |
+| ATT-01 3경로 첨부(툴바·붙여넣기·드래그앤드롭) | 12(presign API) · 13(에디터 통합) | 12 · 13 |
+| ATT-02 형식·용량 제한(JPEG/PNG/GIF/WebP, 5MB) | 12(검증 규칙) · 13(사전 검증) | 12 · 13 |
+| ATT-03 업로드 중 미리보기→교체, 실패 시 노드 제거 | 13 | 13 |
+| ATT-04 재진입 시 정상 표시 | 12(`TodoResponse.attachments`) · 13(`injectViewUrls`) | 13 |
+| ATT-05 삭제 후 저장 시 Soft Delete | 12(`AttachmentService.link()`) | 12 |
+| ATT-06 타인 첨부 조회·연결 차단 | 12(소유권 검증 404) | 12 |
 
 > `PRD.md` 5.1의 **에러 문구 매핑 표**는 Phase 6에서 `lib/errorMessages.ts`로 단일화하고, Phase 7·8에서 화면별로 적용, Phase 10에서 6종 전부를 대조한다.
 > `PRD.md` 7장 비기능 요구사항의 검증 위치(응답 속도 4 · 체감 반응 9 · 브라우저 10 · 반응형 8·10 · 인증 보안 3·4 · 시크릿 관리 10·11 · XSS 4·8 · 문서화 4 · 접근성 7·8)는 위 표 및 각 Phase DoD와 일치한다.
@@ -960,6 +970,149 @@
 
 ---
 
+## Phase 12-0 — 이미지 첨부: 문서 개정 (착수 조건)
+
+**저장소**: 문서(`todo-project`) · **관련 요구사항**: ATT-01~06 신설 · **선행 조건**: 이 Phase 완료·승인 없이 Phase 12(코드)에 착수하지 않는다 (`CLAUDE.md` 2장 "API 계약이 바뀌면 문서 저장소를 먼저 수정한다")
+
+Tiptap 에디터에 이미지 첨부 기능을 추가한다. 로컬 스토리지로 먼저 완성·검증한 뒤 S3로 전환한다(Phase 14). 왜 셋으로 쪼개는지는 아래 참조.
+
+> **왜 Phase 12/13/14로 나누는가** — 기존 Phase는 저장소 경계와 1:1이다(1~5 backend, 6~9 frontend). 태그 규칙이 `v0.{Phase}.0`인데 한 Phase가 두 저장소를 걸치면 태그를 어디에 붙일지 정의되지 않는다. 첨부 백엔드만으로도 엔티티·스토리지 추상화·엔드포인트 6개·뷰 토큰·TodoService 링크·정화기 변경·고아 배치·테스트 16종이라 프론트까지 한 Phase에 묶으면 DoD가 40항목을 넘겨 과밀해진다. **Phase 14를 분리하는 이유**는 코드보다 AWS 콘솔 작업(버킷·IAM·CORS)과 자격증명이 대부분이고 EC2·RDS가 준비된 Phase 11 이후에만 실행 가능하기 때문이다. **12-0을 별도로 두는 이유**는 이번 변경이 신규 API 6종·`TodoResponse` 필드 추가·XSS 화이트리스트 확장·PRD 비목표 뒤집기에 걸쳐 있어 "문서 저장소 먼저" 규칙상 선행이 필수이기 때문이다.
+
+**작업**
+- `docs/PRD.md`: 1장 비목표에서 파일 첨부 항목 제거, 9장 향후 확장 후보의 중복 항목 제거, 3장에 `ATT-01`~`ATT-06`(P0만 사용) 표 신설, 5.0절 요구사항↔화면 매핑 표·5.1절 에러 문구 매핑 표·5.6절 툴바 목록 및 저장 버튼 비활성화 규칙 갱신
+- `docs/ROADMAP.md`: 진행 현황 표·요구사항↔Phase 추적표에 Phase 12/13/14와 ATT-01~06 반영, Phase 12/13/14 절 신설(이 문서 자체)
+- `CLAUDE.md`(루트): 3장 "S3는 MVP 범위에서 제외한다" 삭제 및 Amplify 제약 근거 정정, 4장 `attachments` 테이블 정의 추가(운영 스키마 수동 적용 절차 대상에 포함), 5장 첨부 API 6종·`TodoResponse.attachments`·`ApiResponse` 봉투 예외 목록에 `/raw` 등재, 6장 XSS 허용 태그에 `img` 추가·JWT 클레임에 `purpose` 규칙 추가, 8장 Tiptap 이미지 확장·툴바 목록 갱신
+- `docs/guides/nextjs-15.md`(`next/image` 미도입 근거 정정), `docs/guides/forms.md`(파일 업로드 폼 행 정정)
+
+**DoD**
+- [x] `docs/PRD.md`에 '파일 첨부'가 비목표로 더 이상 언급되지 않음
+- [x] `ATT-01`~`ATT-06`이 PRD.md 3장과 5.0절 매핑표 양쪽에 정합적으로 존재
+- [x] PRD.md 5.1절에 신규 에러코드 4종(`ATTACHMENT_NOT_FOUND`·`ATTACHMENT_ALREADY_UPLOADED`·`FILE_TOO_LARGE`·`UNSUPPORTED_FILE_TYPE`)의 문구가 기재됨
+- [ ] `docs/ROADMAP.md` 진행 현황 표·요구사항 추적표에 Phase 12/13/14, ATT-01~06이 반영됨 (이 항목은 이 문서를 완성하는 태스크 자신의 DoD)
+- [ ] 루트 `CLAUDE.md` 3/4/5/6/8장 개정이 완료되고 기존 서술과 모순되지 않음
+- [ ] `docs/guides/` 2종의 근거 문구 정정이 완료됨
+- [ ] 네 문서(PRD/ROADMAP/CLAUDE.md/guides)의 변경사항 diff를 사용자에게 보고하고, `todo-project` 저장소의 커밋 여부를 확인받음
+
+---
+
+## Phase 12 — 이미지 첨부: 백엔드(로컬 스토리지)
+
+**저장소**: `todo-backend` · **태그**: `v0.12.0` · **관련 요구사항**: ATT-01~06 (백엔드 구현 범위)
+
+**작업**
+- `attachments` 테이블: `Attachment` 엔티티(`BaseEntity` 상속, `Instant` 타입), `AttachmentStatus`(TEMP/LINKED)·`StorageType`(LOCAL/S3) enum, `AttachmentRepository`(`findByIdAndDeletedAtIsNull`, N+1 방지용 배치 조회 `findByTodoIdInAndDeletedAtIsNull(List<Long>)`)
+- Flyway는 도입하지 않는다(`CLAUDE.md` 4장 기존 결정 유지) — local: `update`, test: `create-drop`, prod: `validate`(운영 스키마 수동 적용 절차를 이 테이블에 대해 재수행하고 `db/schema.sql` 갱신)
+- 스토리지 추상화: `StorageService` 인터페이스(`createUploadUrl`/`createViewUrl(Attachment)`/`verifyUploaded`/`delete`), `LocalStorageService`(항상 `@Component` 등록 — S3 전환 후에도 과거 LOCAL 레코드 조회를 위함), `StorageServiceResolver`(`forNewUpload()`는 설정값 기준, `forAttachment(Attachment)`는 레코드의 `storage_type` 기준)
+- 업로드 흐름(presign → PUT → complete 3단계): presign 응답에 서버가 정규화한 `contentType`을 반드시 반환(S3 서명 불일치 방지, Phase 14 대비)
+- 뷰 토큰: `AttachmentTokenProvider` 신설(`purpose=attachment-view`, `aid=attachmentId`, 24시간 만료, 기존 `SecretKey`/HS256 재사용). 기존 `JwtTokenProvider.createToken`에 `claim("purpose","access")` 추가. `JwtAuthenticationFilter`는 `purpose=="access"`인 토큰만 인증에 사용. `/raw` 엔드포인트는 `purpose=="attachment-view" && aid==경로변수`일 때만 통과(양방향 권한 상승 방지 — 최우선 검증 대상)
+- `SecurityConfig.PUBLIC_PATHS`에 `/api/v1/attachments/*/raw` 추가(컨트롤러가 직접 인가하는 이 프로젝트 유일의 예외이며, `ApiResponse` 봉투를 쓰지 않고 상태코드만 반환)
+- XSS: `HtmlSanitizer`의 SAFELIST에 `img` 추가(`data-attachment-id`, `alt`만 허용, `src`는 절대 등록하지 않음). `AttachmentHtmlReader` 신설(정화 후 정본 HTML만 읽기 전용 Jsoup 파싱으로 id 수집, 재직렬화하지 않아 `pre` prettyPrint 함정을 구조적으로 피함)
+- 설정: `application.yml`에 `app.upload.max-file-size`·`allowed-content-types`·`app.storage.url-expiry-millis` / `application-local.yml`에 `app.storage.type=local`·`base-dir`(`LOCAL_UPLOAD_DIR`, 기본값 없음)·`base-url` / `application-prod.yml`에 `app.storage.type=s3` 키(Phase 14 대비, 커밋 대상)
+- `ErrorCode` 4종 추가: `ATTACHMENT_NOT_FOUND`(404)·`ATTACHMENT_ALREADY_UPLOADED`(409)·`FILE_TOO_LARGE`(400)·`UNSUPPORTED_FILE_TYPE`(400)
+- `AttachmentController` 6개 엔드포인트(presign/upload/complete/url/raw/delete), `AttachmentService`(소유권 불일치는 403이 아닌 404, complete 단계에서 매직바이트 검증)
+- `TodoService.create`/`update`: `htmlSanitizer.clean()` 이후의 정본 HTML에서 `AttachmentHtmlReader`로 id 수집 → `AttachmentService.link(todo, userId, ids)` 호출(신규 id는 LINKED 전환, 기존 LINKED였으나 본문에서 빠진 id는 softDelete, 그 외 — 존재하지 않음/타인소유/이미 다른 Todo에 LINKED — 는 구분 없이 400)
+- `TodoResponse`에 `attachments: List<AttachmentView(id, viewUrl)>` 필드 추가, `TodoService.list()`에서 배치 조회로 N+1 방지
+- 고아 파일 정리 배치: `@EnableScheduling` 추가(EC2 단일 인스턴스 전제 명시), 하루 1회 — `status=TEMP`이고 24시간 경과한 레코드는 파일과 함께 삭제, `deleted_at` 세팅 후 7일 경과한 레코드는 파일만 삭제
+- 통합·단위 테스트 16종 작성(아래 DoD), 기존 Phase 3~9 통합테스트 전체를 재실행해 `purpose` 클레임 도입 후에도 회귀가 없음을 확인
+
+**DoD**
+- [ ] `<img src="http://...">` 저장 시 `src` 제거, 태그는 유지
+- [ ] `<img src="javascript:...">`·`data:`·`blob:` 전부 `src` 제거
+- [ ] `data-attachment-id`·`alt`는 보존됨
+- [ ] 기존 허용 태그 집합(`p`·`strong`·`pre` 등)이 그대로 유지됨
+- [ ] 뷰 토큰을 `Authorization: Bearer`로 보내면 401 (`purpose` 불일치)
+- [ ] 액세스 토큰을 `/raw?token=`으로 보내면 401
+- [ ] 다른 첨부의 `aid`를 가진 토큰으로 접근 시 401/404
+- [ ] 만료된 뷰 토큰으로 접근 시 401
+- [ ] presign → PUT → complete → Todo 저장 순서로 `status=LINKED`·`todo_id`가 채워짐
+- [ ] 본문에서 이미지를 제거하고 저장하면 해당 첨부에 `deleted_at`이 기록됨
+- [ ] 타인 소유 첨부 id를 본문에 넣어 저장 시 400
+- [ ] 존재하지 않는 id로 저장 시 같은 400(응답이 구분되지 않음)
+- [ ] 이미 다른 Todo에 LINKED된 id로 저장 시 400
+- [ ] 5MB 초과 파일 400, 허용되지 않은 contentType 400
+- [ ] 매직바이트 불일치(확장자·헤더 위조) 시 400 + 파일 삭제
+- [ ] `storageKey`에 `../`가 섞인 요청이 차단됨
+- [ ] `TodoResponse.attachments` 채움 시 페이지 내 항목 수와 무관하게 추가 쿼리가 발생하지 않음(N+1 미발생, 배치 조회 실측)
+- [ ] 서버 기동 시 `LOCAL_UPLOAD_DIR`이 없으면 자동 생성됨
+- [ ] 고아 파일 정리 배치가 TEMP 24시간 경과 삭제와 soft-deleted 7일 경과 파일 삭제 두 가지를 모두 수행함
+- [ ] 운영 스키마 수동 적용 절차의 대상에 `attachments`가 포함되어 `db/schema.sql`이 갱신됨
+- [ ] Swagger에 첨부 API 6종이 노출되고 `@SecurityScheme` Authorize로 호출 가능
+- [ ] 기존 Phase 3~9 통합테스트 전체가 `purpose` 클레임 도입 이후에도 회귀 없이 통과함
+- [ ] `todolist_test`(PostgreSQL) 기준으로 실행되며 로컬 파일 테스트는 `@TempDir`로 실제 업로드 디렉토리를 오염시키지 않음
+
+---
+
+## Phase 13 — 이미지 첨부: 프론트엔드
+
+**저장소**: `todo-frontend` · **태그**: `v0.13.0` · **관련 요구사항**: ATT-01~06 (프론트 UX 범위)
+
+**작업**
+- `@tiptap/extension-image`를 `@tiptap/react`와 동일 버전으로 `--legacy-peer-deps`와 함께 설치
+- `src/lib/attachmentHtml.ts`: `toCanonicalHtml`(표시전용 속성 `src`·`data-upload-state` 제거)·`injectViewUrls`(서버가 발급한 viewUrl을 `img[data-attachment-id]`에 주입, 대응 URL 없는 노드는 제거)
+- `src/lib/sanitize.ts` 확장: 공통 `BASE`(`ALLOWED_TAGS`에 `img` 추가) + `sanitizeHtml`(저장·비교용, `src` 미포함)·`sanitizeHtmlForDisplay`(에디터 주입용, `src` 포함) 분리
+- `src/components/todo/AttachmentImage.ts`: `Image.extend()` 커스텀 노드, `parseHTML()`을 `img[data-attachment-id]`로 오버라이드(기본 `img[src]` 규칙을 쓰면 정본 HTML엔 `src`가 없어 재진입 시 이미지가 사라짐), `addInputRules()`를 빈 배열로 오버라이드(마크다운 `![alt](url)` 입력 차단)
+- `src/lib/attachmentService.ts`: `presignAttachment`·`completeAttachment`·`getViewUrl`·`deleteAttachment`(`apiFetch` 재사용) + `uploadToUrl`(별도 `fetch` — `apiFetch`는 Content-Type을 강제 덮어쓰고 응답을 항상 `json()`으로 파싱해 바이너리 PUT에 쓸 수 없음)
+- `src/hooks/useAttachmentUpload.ts`: presign→uploadToUrl→complete 오케스트레이션, 노드 위치는 `pos` 캐싱 없이 `findImagePos(editor, attachmentId)`로 매번 재탐색
+- `TodoEditor.tsx`: 툴바 이미지 버튼(기존 `ToolbarButton` 재사용) + 붙여넣기·드래그앤드롭 3경로, 업로드 진행 상태를 `onUploadingChange`로 상위에 전달
+- `TodoForm.tsx`: `TodoEditor`에 넘기는 `content`를 `injectViewUrls(initialTodo.content, urlMap)` 결과로 교체, `handleContentChange`에서 `toCanonicalHtml`로 정규화한 값을 기준선·현재 state 양쪽에 동일 적용(만료 가능한 viewUrl 재주입이 dirty 오탐을 일으키지 않게), 저장 버튼 `disabled`에 `uploading` 추가
+- `src/lib/errorMessages.ts`에 `ATTACHMENT_NOT_FOUND`·`ATTACHMENT_ALREADY_UPLOADED`·`FILE_TOO_LARGE`·`UNSUPPORTED_FILE_TYPE` 4종의 한국어 메시지 추가
+- 클라이언트 사전 검증(`lib/validation.ts`): 5MB·JPEG/PNG/GIF/WebP 형식 확인 후 업로드 시작
+
+**DoD** (appendFileImage.md 10절 로컬 검증 시나리오를 그대로 사용 — `claude-in-chrome` 브라우저 실측)
+- [ ] 서버 기동 시 `LOCAL_UPLOAD_DIR`이 자동 생성됨
+- [ ] 이미지 첨부 시 `{base}/todos/{userId}/{yyyy}/{MM}/...` 경로에 파일이 실제로 생성됨
+- [ ] `attachments` 테이블에 `status=TEMP`로 행이 생성됨
+- [ ] 할 일 저장 후 `status=LINKED`, `todo_id`가 채워짐
+- [ ] 저장된 할 일을 다시 열었을 때 이미지가 정상 표시됨
+- [ ] 다시 열어 아무것도 고치지 않고 "목록으로"를 눌렀을 때 이탈 확인창이 뜨지 않음(정규형 비교 회귀 검사)
+- [ ] 본문에서 이미지를 지우고 저장하면 해당 첨부가 Soft Delete됨
+- [ ] 업로드가 진행 중일 때 저장 버튼이 비활성화됨
+- [ ] 업로드 실패 시(서버를 내리고 시도) 노드가 사라지고 토스트가 뜸
+- [ ] 5MB 초과 파일, `.exe`·`.svg` 파일 업로드가 거부됨
+- [ ] 확장자만 `.png`로 바꾼 텍스트 파일이 complete 단계에서 거부됨
+- [ ] 다른 사용자의 `attachmentId`로 조회 시 401/404
+- [ ] `storageKey`에 `../`를 넣은 요청이 차단됨
+- [ ] 업로드 디렉토리가 어떤 저장소의 `git status`에도 잡히지 않음
+- [ ] 이미지가 포함된 본문을 저장한 뒤 DB의 `content`를 직접 조회해 `src` 속성이 한 건도 없음
+- [ ] 360px 폭에서 이미지가 넘치지 않고 가로 스크롤이 생기지 않음
+- [ ] `npm run build`가 통과함
+- [ ] 툴바 버튼으로 파일을 선택해 업로드가 시작됨(ATT-01 경로 1)
+- [ ] 클립보드 붙여넣기로 업로드가 시작됨(ATT-01 경로 2)
+- [ ] 드래그 앤 드롭으로 업로드가 시작됨(ATT-01 경로 3)
+- [ ] 결과를 사용자에게 보고하고, `todo-frontend` 저장소의 커밋 및 `v0.13.0` 태그 여부를 확인받음
+
+---
+
+## Phase 14 — 이미지 첨부: S3 전환 + 운영 재검증
+
+**저장소**: `todo-backend` + 인프라 · **태그**: `v0.14.0` · **선행 조건**: Phase 11(AWS 배포) 완료 이후에만 착수
+
+**작업**
+- `pom.xml`에 AWS SDK v2(`software.amazon.awssdk:s3`, `s3-presigner`) 추가
+- `S3StorageService` 구현(`StorageService` 인터페이스, `@ConditionalOnProperty(app.storage.type=s3)`)을 `LocalStorageService`(항상 등록)와 동시에 등록해 두 구현체가 공존하게 함
+- `StorageServiceResolver`가 `Attachment.storageType` 컬럼 값으로 실제 사용할 구현체를 매 요청마다 라우팅함을 확인(전환 후에도 과거 LOCAL 레코드 조회 가능해야 함)
+- `application-prod.yml`에 `app.storage.type=s3`와 S3 버킷/리전 설정 키 반영(값은 AWS 콘솔 설정 결과로 채움)
+- AWS 콘솔 설정: 버킷 CORS(`PUT`/`GET`/`HEAD` 허용, `AllowedHeaders:["*"]`, `ExposeHeaders:["ETag"]`), 퍼블릭 액세스 차단 유지, IAM 정책은 해당 버킷 prefix에 대한 `PutObject`/`GetObject`/`DeleteObject`만 허용(최소 권한), EC2에는 액세스 키 대신 IAM Role 연결
+- prod 프로파일(`app.storage.type=s3`)로 기동해 appendFileImage.md 10절 검증 시나리오 재실행
+
+**DoD**
+- [ ] AWS SDK v2 의존성 추가 후 `./mvnw dependency:tree` 정상
+- [ ] `S3StorageService`가 presigned PUT/GET 발급 및 객체 삭제를 정상 수행함
+- [ ] `app.storage.type=s3`로 기동해도 `LocalStorageService` 빈이 여전히 등록되어 있음
+- [ ] 전환 이전 `storage_type=LOCAL`로 저장된 기존 첨부 레코드가 전환 후에도 정상 조회됨(`StorageServiceResolver` 라우팅 실측)
+- [ ] 프론트엔드 코드 변경 없이 동일 API 계약으로 정상 동작함(수정이 필요했다면 추상화 설계 오류로 별도 보고)
+- [ ] presign이 반환한 `contentType`과 업로드 PUT 헤더가 바이트 단위로 일치해 `SignatureDoesNotMatch`가 재현되지 않음
+- [ ] S3 버킷이 퍼블릭으로 열려 있지 않음(직접 URL 접근 시 403)
+- [ ] 매직바이트 검증이 S3 경로에서도 동일하게 동작함(complete 단계)
+- [ ] 5MB 초과/미허용 형식 거부가 S3 경로에서도 동일하게 동작함
+- [ ] 고아 파일 정리 배치가 S3 객체 삭제도 동일 규칙(TEMP 24시간·soft-deleted 7일)으로 수행함
+- [ ] 버킷 CORS·퍼블릭 액세스 차단·IAM 최소 권한·EC2 IAM Role 네 가지 콘솔 설정이 완료됨
+- [ ] AWS 자격증명이 코드·설정 파일에 하드코딩되지 않음(로컬은 환경변수, EC2는 IAM Role만 사용)
+- [ ] prod 프로파일로 appendFileImage.md 10절의 17개 검증 시나리오를 재실행해 전부 통과함
+- [ ] 결과를 최종 보고하고, `todo-backend` 저장소의 커밋 및 `v0.14.0` 태그 진행 여부를 확인받음
+
+---
+
 ## 리스크
 
 | 리스크 | 대응 | 확인 시점 |
@@ -1040,3 +1193,4 @@
 
 - 각 Phase 완료 시 해당 저장소에 `v0.{Phase번호}.0` (예: Phase 4 완료 → `v0.4.0`)
 - Phase 10 전체 검증 통과 시 세 저장소 모두 `v1.0.0`
+- **Phase 12-0은 예외로 태그를 달지 않는다.** 문서 저장소(`todo-project`)는 태그 체계 밖이며, 이 Phase는 코드 작업(Phase 12) 착수를 위한 문서 승인 절차일 뿐이다
