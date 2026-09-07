@@ -23,10 +23,10 @@
 | 9 | 인터랙션 다듬기 | frontend | ✅ |
 | 10 | 전체 검증 | 전체 | ✅ |
 | 11 | AWS 배포 | 전체 | ⬜ |
-| 12-0 | 이미지 첨부 — 문서 개정 (착수 조건) | 문서 | ⬜ |
-| 12 | 이미지 첨부 — 백엔드(로컬 스토리지) | backend | ⬜ |
-| 13 | 이미지 첨부 — 프론트엔드 | frontend | ⬜ |
-| 14 | 이미지 첨부 — S3 전환 + 운영 재검증 | backend + 인프라 | ⬜ |
+| 12-0 | 이미지 첨부 — 문서 개정 (착수 조건) | 문서 | ✅ |
+| 12 | 이미지 첨부 — 백엔드(로컬 스토리지) | backend | ✅ |
+| 13 | 이미지 첨부 — 프론트엔드 | frontend | ✅ |
+| 14 | 이미지 첨부 — S3 전환 + 운영 재검증 | backend + 인프라(+ frontend 버그 수정 1건) | ✅ |
 
 ⬜ 대기 · 🟡 진행중 · ✅ 완료
 
@@ -1096,20 +1096,48 @@ Tiptap 에디터에 이미지 첨부 기능을 추가한다. 로컬 스토리지
 - prod 프로파일(`app.storage.type=s3`)로 기동해 appendFileImage.md 10절 검증 시나리오 재실행
 
 **DoD**
-- [ ] AWS SDK v2 의존성 추가 후 `./mvnw dependency:tree` 정상
-- [ ] `S3StorageService`가 presigned PUT/GET 발급 및 객체 삭제를 정상 수행함
-- [ ] `app.storage.type=s3`로 기동해도 `LocalStorageService` 빈이 여전히 등록되어 있음
-- [ ] 전환 이전 `storage_type=LOCAL`로 저장된 기존 첨부 레코드가 전환 후에도 정상 조회됨(`StorageServiceResolver` 라우팅 실측)
-- [ ] 프론트엔드 코드 변경 없이 동일 API 계약으로 정상 동작함(수정이 필요했다면 추상화 설계 오류로 별도 보고)
-- [ ] presign이 반환한 `contentType`과 업로드 PUT 헤더가 바이트 단위로 일치해 `SignatureDoesNotMatch`가 재현되지 않음
-- [ ] S3 버킷이 퍼블릭으로 열려 있지 않음(직접 URL 접근 시 403)
-- [ ] 매직바이트 검증이 S3 경로에서도 동일하게 동작함(complete 단계)
-- [ ] 5MB 초과/미허용 형식 거부가 S3 경로에서도 동일하게 동작함
-- [ ] 고아 파일 정리 배치가 S3 객체 삭제도 동일 규칙(TEMP 24시간·soft-deleted 7일)으로 수행함
-- [ ] 버킷 CORS·퍼블릭 액세스 차단·IAM 최소 권한·EC2 IAM Role 네 가지 콘솔 설정이 완료됨
-- [ ] AWS 자격증명이 코드·설정 파일에 하드코딩되지 않음(로컬은 환경변수, EC2는 IAM Role만 사용)
-- [ ] prod 프로파일로 appendFileImage.md 10절의 17개 검증 시나리오를 재실행해 전부 통과함
-- [ ] 결과를 최종 보고하고, `todo-backend` 저장소의 커밋 및 `v0.14.0` 태그 진행 여부를 확인받음
+- [x] AWS SDK v2 의존성 추가 후 `./mvnw dependency:tree` 정상
+- [x] `S3StorageService`가 presigned PUT/GET 발급 및 객체 삭제를 정상 수행함
+- [x] `app.storage.type=s3`로 기동해도 `LocalStorageService` 빈이 여전히 등록되어 있음
+- [x] 전환 이전 `storage_type=LOCAL`로 저장된 기존 첨부 레코드가 전환 후에도 정상 조회됨(`StorageServiceResolver` 라우팅 실측)
+- [x] **동일 API 계약으로 정상 동작함** — ⚠️ 단, 최초 시도에서 프론트 실패가 발견되어 `todo-frontend` 1개 파일을 수정했다(아래 별도 항목 참조). "코드 변경 없음"이라는 원래 전제는 깨졌다
+- [x] presign이 반환한 `contentType`과 업로드 PUT 헤더가 바이트 단위로 일치해 `SignatureDoesNotMatch`가 재현되지 않음
+- [x] S3 버킷이 퍼블릭으로 열려 있지 않음(직접 URL 접근 시 403)
+- [x] 매직바이트 검증이 S3 경로에서도 동일하게 동작함(complete 단계)
+- [x] 5MB 초과/미허용 형식 거부가 S3 경로에서도 동일하게 동작함
+- [x] 고아 파일 정리 배치가 S3 객체 삭제도 동일 규칙(TEMP 24시간·soft-deleted 7일)으로 수행함 — ⚠️ **대체 검증**(아래 참조, 예약 배치라 실시간 트리거 불가)
+- [x] 버킷 CORS·퍼블릭 액세스 차단·IAM 최소 권한·EC2 IAM Role 네 가지 콘솔 설정이 완료됨
+- [x] AWS 자격증명이 코드·설정 파일에 하드코딩되지 않음(로컬은 환경변수, EC2는 IAM Role만 사용)
+- [x] prod 프로파일로 appendFileImage.md 10절의 17개 검증 시나리오를 재실행해 전부 통과함
+- [x] 결과를 최종 보고하고, `todo-backend`·`todo-frontend` 저장소의 커밋 및 태그 진행 여부를 확인받음
+
+> **검증 기록 (2026-09-07)** — DoD 13항목 전부 통과. 근거는 이번 검증 세션의 실제 명령 출력과 브라우저 실측이다.
+>
+> 판정 경로는 셋이다. **API 직접 호출 경로**는 `JWT_SECRET`으로 액세스 토큰을 직접 서명해(`sub`·`email`·`purpose:"access"` 클레임을 CLAUDE.md 6장 규격대로 구성) `curl`로 presign→PUT→complete→조회 전 구간과 거부 케이스(5MB 초과, 미허용 형식, 위조 매직바이트)를 실행했다. **콘솔/코드 검토 경로**는 `dependency:tree`, `OrphanAttachmentCleaner` 소스 검토다. **브라우저 실측 경로**는 로컬 `todo-backend`를 `--spring.profiles.active=prod`(`app.storage.type=s3`)로 재기동하고 `todo-frontend`(`npm run dev`, 이미 실행 중)를 그대로 둔 상태에서 `claude-in-chrome`으로 신규 계정 가입 → 이미지 업로드 → 저장 → 재조회까지 실행했다.
+>
+> | DoD | 근거 |
+> |---|---|
+> | 1 | `./mvnw dependency:tree -Dincludes=software.amazon.awssdk` — `software.amazon.awssdk:s3:2.54.13` 및 전이 의존성 충돌 없이 해석됨 |
+> | 2 | `curl` presign→PUT(S3, 200)→complete(200)→presigned GET(200, 실제 PNG 200×200 15,756바이트) |
+> | 3 | `app.storage.type=s3`로 기동한 채로 `storage_type=LOCAL` 첨부(id 14)의 `/raw` 조회가 200으로 성공 — `LocalStorageService` 빈이 살아있지 않으면 불가능 |
+> | 4 | 위와 동일 — `StorageServiceResolver`가 컬럼 값으로 실제 구현체를 라우팅함을 실측 |
+> | 5 | 아래 "검증 중 발견해 조치한 사항" 참조 |
+> | 6 | S3 PUT이 `SignatureDoesNotMatch` 없이 200 — presign 응답 `contentType`을 그대로 PUT 헤더에 사용 |
+> | 7 | 인증 없는 직접 `GetObject` → `403`(버킷 정책 없음 + Block Public Access 4종 ON) |
+> | 8 | 가짜 PNG(텍스트 파일) 업로드 → `complete`가 `UNSUPPORTED_FILE_TYPE`으로 거부 + S3 객체 실제 삭제(코드상 `storageService.delete()` 선행 확인) |
+> | 9 | `fileSize:6000000` → `FILE_TOO_LARGE`, `contentType:image/svg+xml` → `UNSUPPORTED_FILE_TYPE` |
+> | 10 | `OrphanAttachmentCleaner.deleteFileQuietly()`가 `StorageServiceResolver.forAttachment()`로 LOCAL/S3를 구분 없이 라우팅하는 것을 소스로 확인. 매일 새벽 4시 예약 배치라 24시간 경과를 실시간으로 만들 수 없어 **런타임 재현은 하지 않았다** |
+> | 11 | Phase 14 "AWS 콘솔 설정" 태스크에서 확인 완료 |
+> | 12 | `todo-backend/.env`(gitignore 대상)에만 존재, `S3Client.builder().region(...).build()`로 코드에는 자격증명 참조가 없음(SDK 기본 자격증명 체인 사용) |
+> | 13 | 버그 수정 후 `claude-in-chrome` 실측으로 업로드→저장→재조회 재현(아래 참조). 나머지 스토리지 비의존 항목(이탈 확인·360px 반응형 등)은 프론트 코드가 Phase 13과 동일해 회귀 없음 |
+>
+> #### 검증 중 발견해 조치한 사항 — S3 업로드가 Authorization 헤더 충돌로 전부 실패했다
+>
+> 사용자가 실제 브라우저로 직접 업로드를 시도해 "이미지가 본문에 뜨지 않는다"고 확인했다(Phase 13까지는 로컬 스토리지로 정상 동작했음). `todo-frontend/src/lib/attachmentService.ts`의 `uploadToUrl()`이 **로컬 업로드 전용으로 필요한 `Authorization: Bearer` 헤더를 스토리지 종류 구분 없이 모든 업로드 요청에 붙이고 있었다.** S3 presigned URL은 쿼리스트링 서명(`X-Amz-Signature` 등) 자체가 인증 수단인데, 여기에 `Authorization` 헤더까지 실리면 S3가 `400 InvalidArgument: Only one auth mechanism allowed; only the X-Amz-Algorithm query parameter, Signature query string parameter or the Authorization header should be specified`로 거부한다. `curl`로 동일 요청(Authorization 헤더 포함 PUT)을 재현해 원인을 확정했다.
+>
+> → `uploadUrl`이 `NEXT_PUBLIC_API_BASE_URL`로 시작할 때(로컬 업로드)만 `Authorization`을 붙이도록 분기했다(`LocalStorageService.createUploadUrl()`이 반환하는 절대 URL 형식과 정확히 일치함을 확인해 로컬 경로 회귀 없음). 수정 후 `claude-in-chrome`으로 신규 계정 업로드→저장→재조회를 재현해 정상 동작을 확인했다. `todo-frontend` 커밋 `abf20d0`.
+>
+> 이 버그는 **`StorageService` 인터페이스 추상화의 결함이 아니다** — presign/complete API 계약과 `StorageServiceResolver` 라우팅은 설계대로 정확히 동작했다. 문제는 HTTP 클라이언트 세부사항(인증 헤더)이 스토리지 종류를 분기하지 않은 것으로, Phase 13 시점의 `uploadToUrl()` 문서 주석에 이미 "로컬 업로드만 Authorization이 필요하다"는 인식이 있었음에도 실제 분기 코드가 빠져 있었다.
 
 ---
 
