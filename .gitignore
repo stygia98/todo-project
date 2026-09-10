@@ -16,3 +16,6 @@ shrimp_data/
 # 환경 변수 — .env*만 쓰면 .env.example까지 무시되므로 예외 줄이 반드시 필요하다
 .env*
 !.env.example
+
+# EC2 SSH 접속용 개인키. 절대 커밋하지 않는다
+*.ppk

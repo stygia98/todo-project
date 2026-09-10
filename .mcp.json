@@ -3,7 +3,9 @@
     "playwright": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@playwright/mcp@latest"],
+      "args": [
+        "@playwright/mcp@latest"
+      ],
       "env": {}
     },
     "context7": {
@@ -13,19 +15,28 @@
     "sequential-thinking": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
       "env": {}
     },
     "shadcn": {
       "command": "npx",
-      "args": ["shadcn@latest", "mcp"]
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
     },
     "shrimp-task-manager": {
       "type": "stdio",
-      "command": "node",
-      "args": ["D:\\claude\\mcp-shrimp-task-manager\\dist\\index.js"],
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-shrimp-task-manager"
+      ],
       "env": {
-        "DATA_DIR": "D:\\claude\\todo-project\\shrimp_data",
+        "DATA_DIR": "./shrimp_data",
         "TEMPLATES_USE": "ko",
         "ENABLE_GUI": "true"
       }
